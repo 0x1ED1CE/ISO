@@ -22,27 +22,42 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "isovm.h"
+#include <math.h>
 
-#ifndef ISO_AUX_H
-#define ISO_AUX_H
+#include "isofp.h"
 
-#define ISO_INT_TERMINATE      0x40
-#define ISO_INT_CONSOLE_OUTPUT 0x50
-#define ISO_INT_CONSOLE_INPUT  0x51
-#define ISO_INT_FILE_OPEN      0x60
-#define ISO_INT_FILE_CLOSE     0x61
-#define ISO_INT_FILE_SIZE      0x62
-#define ISO_INT_FILE_READ      0x63
-#define ISO_INT_FILE_WRITE     0x64
-#define ISO_INT_CLOCK          0x70
-
-void iso_aux_vm_debug_info(
+void iso_fp_handle_interrupt(
 	iso_vm *vm
-);
-
-void iso_aux_handle_interrupt(
-	iso_vm *vm
-);
-
-#endif
+) {
+	if (vm->INT!=ISO_INT_ILLEGAL_OPERATION)
+		return;
+	
+	iso_vm_jump(vm,vm->PC-1);
+	
+	switch(iso_vm_fetch(vm)) {
+		case ISO_OP_FAD:
+			iso_vm_interrupt(vm,ISO_INT_NONE);
+			
+			break;
+		case ISO_OP_FSU:
+			iso_vm_interrupt(vm,ISO_INT_NONE);
+			
+			break;
+		case ISO_OP_FMU:
+			iso_vm_interrupt(vm,ISO_INT_NONE);
+			
+			break;
+		case ISO_OP_FDI:
+			iso_vm_interrupt(vm,ISO_INT_NONE);
+			
+			break;
+		case ISO_OP_FPO:
+			iso_vm_interrupt(vm,ISO_INT_NONE);
+			
+			break;
+		case ISO_OP_FMO:
+			iso_vm_interrupt(vm,ISO_INT_NONE);
+			
+			break;
+	}
+}

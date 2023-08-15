@@ -116,7 +116,7 @@ void iso_vm_set(
 	if (address>=SP) {
 		iso_vm_interrupt(
 			context,
-			ISO_INT_ILLEGAL_ACCESS
+			ISO_INT_OUT_OF_BOUNDS
 		);
 		
 		return;
@@ -138,7 +138,7 @@ iso_uint iso_vm_get(
 	if (address>=SP) {
 		iso_vm_interrupt(
 			context,
-			ISO_INT_ILLEGAL_ACCESS
+			ISO_INT_OUT_OF_BOUNDS
 		);
 		
 		return 0;
@@ -157,7 +157,7 @@ void iso_vm_jump(
 	if (address>=context->program_size) {
 		iso_vm_interrupt(
 			context,
-			ISO_INT_ILLEGAL_JUMP
+			ISO_INT_INVALID_JUMP
 		);
 		
 		return;
@@ -166,11 +166,11 @@ void iso_vm_jump(
 	context->PC=address;
 }
 
-iso_uint iso_vm_run(
+void iso_vm_run(
 	iso_vm *context
 ) {
 	if (context->INT)
-		return context->INT;
+		return;
 	
 	/* Registers */
 	
@@ -385,7 +385,5 @@ iso_uint iso_vm_run(
 					ISO_INT_ILLEGAL_OPERATION
 				);
 		}
-	} while (*INT==0);
-	
-	return *INT;
+	} while (*INT==ISO_INT_NONE);
 }

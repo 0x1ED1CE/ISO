@@ -27,14 +27,12 @@ SOFTWARE.
 #ifndef ISO_VM_H
 #define ISO_VM_H
 
-/* Interrupt codes */
-
 #define ISO_INT_NONE              0x00
 #define ISO_INT_REGISTER_VALUE    0x10
 #define ISO_INT_END_OF_PROGRAM    0x20
 #define ISO_INT_ILLEGAL_OPERATION 0x21
-#define ISO_INT_ILLEGAL_JUMP      0x22
-#define ISO_INT_ILLEGAL_ACCESS    0x30
+#define ISO_INT_INVALID_JUMP      0x22
+#define ISO_INT_OUT_OF_BOUNDS     0x30
 #define ISO_INT_STACK_OVERFLOW    0x31
 #define ISO_INT_STACK_UNDERFLOW   0x32
 
@@ -82,7 +80,7 @@ void iso_vm_jump(
 	iso_uint address
 );
 
-iso_uint iso_vm_run(
+void iso_vm_run(
 	iso_vm *context
 );
 

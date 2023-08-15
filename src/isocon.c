@@ -27,8 +27,9 @@ SOFTWARE.
 #include <string.h>
 
 #include "arger.h"
-#include "isovm.h"
 #include "isoasm.h"
+#include "isovm.h"
+#include "isofp.h"
 #include "isoaux.h"
 
 #define ISO_DEFAULT_STACK_SIZE 64000
@@ -36,9 +37,9 @@ SOFTWARE.
 void about() {
 	printf(
 		"ISO v0 Copyright (C) 2023 Dice\n"
-		"Usage: iso -ib <file> -r\n"
+		"Usage: iso -b <file> -r\n"
 		"Options:\n"
-		"-ib\tImport binary\n"
+		"-b\tImport binary\n"
 		"-s\tStack size\n"
 		"-r\tRun program\n"
 	);
@@ -61,7 +62,7 @@ int main(
 	unsigned int program_size = 0;
 	unsigned int stack_size   = ISO_DEFAULT_STACK_SIZE;
 	
-	arger_parse(argc,argv,"ib",&opt_import_binary,&par_import_binary);
+	arger_parse(argc,argv,"b",&opt_import_binary,&par_import_binary);
 	arger_parse(argc,argv,"s",&opt_set_stack,&par_set_stack);
 	arger_parse(argc,argv,"r",&opt_run,NULL);
 	
@@ -145,10 +146,11 @@ int main(
 		vm.program      = program;
 		vm.stack        = stack;
 		
-		while (vm.INT==0) {
+		do {
 			iso_vm_run(&vm);
+			iso_fp_handle_interrupt(&vm);
 			iso_aux_handle_interrupt(&vm);
-		}
+		} while (vm.INT==0);
 		
 		return vm.INT;
 	}
