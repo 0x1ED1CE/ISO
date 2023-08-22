@@ -25,19 +25,21 @@ SOFTWARE.
 #ifndef ISO_H
 #define ISO_H
 
+#define ISO_VERSION 0.4
+
 #define ISO_OP_NUM 0x00 //NUMBER
 #define ISO_OP_INT 0x10 //INTERRUPT
-#define ISO_OP_POS 0x20 //STACK POSITION
-#define ISO_OP_DUP 0x21 //DUPLICATE
-#define ISO_OP_POP 0x22 //POP
-#define ISO_OP_ROT 0x23 //ROTATE
-#define ISO_OP_SET 0x24 //SET ADDRESS
-#define ISO_OP_GET 0x25 //GET ADDRESS
-#define ISO_OP_JMP 0x30 //JUMP
-#define ISO_OP_JEQ 0x31 //JUMP IF EQUAL
-#define ISO_OP_JNE 0x32 //JUMP IF NOT EQUAL
-#define ISO_OP_JLS 0x33 //JUMP IF LESS THAN
-#define ISO_OP_JLE 0x34 //JUMP IF LESS OR EQUAL
+#define ISO_OP_JMP 0x20 //JUMP
+#define ISO_OP_JEQ 0x21 //JUMP IF EQUAL
+#define ISO_OP_JNE 0x22 //JUMP IF NOT EQUAL
+#define ISO_OP_JLS 0x23 //JUMP IF LESS THAN
+#define ISO_OP_JLE 0x24 //JUMP IF LESS OR EQUAL
+#define ISO_OP_POS 0x30 //STACK POSITION
+#define ISO_OP_DUP 0x31 //DUPLICATE
+#define ISO_OP_POP 0x32 //POP
+#define ISO_OP_ROT 0x33 //ROTATE
+#define ISO_OP_SET 0x34 //SET ADDRESS
+#define ISO_OP_GET 0x35 //GET ADDRESS
 #define ISO_OP_ADD 0x40 //ADD
 #define ISO_OP_SUB 0x41 //SUBTRACT
 #define ISO_OP_MUL 0x42 //MULTIPLY
@@ -53,10 +55,5 @@ SOFTWARE.
 
 typedef unsigned int  iso_uint;
 typedef unsigned char iso_char;
-typedef float         iso_float;
-typedef union {
-	iso_uint uint;
-	iso_float fp;
-} iso_word;
 
 #endif

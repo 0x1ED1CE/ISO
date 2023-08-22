@@ -22,33 +22,22 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/* ISO Floating Point Extension */
-
 #include "isovm.h"
 
-#ifndef ISO_FP_H
-#define ISO_FP_H
+#ifndef ISO_IO_H
+#define ISO_IO_H
 
-#define ISO_OP_FTU 0x61 //FLOAT TO UNSIGNED
-#define ISO_OP_UTF 0x62 //UNSIGNED TO FLOAT
-#define ISO_OP_FEQ 0x70 //JUMP IF FLOAT EQUAL
-#define ISO_OP_FNE 0x71 //JUMP IF FLOAT NOT EQUAL
-#define ISO_OP_FLS 0x72 //JUMP IF FLOAT LESS THAN
-#define ISO_OP_FLE 0x73 //JUMP IF FLOAT LESS OR EQUAL
-#define ISO_OP_FAD 0x80 //FLOAT ADD
-#define ISO_OP_FSU 0x81 //FLOAT SUBTRACT
-#define ISO_OP_FMU 0x82 //FLOAT MULTIPLY
-#define ISO_OP_FDI 0x83 //FLOAT DIVIDE
-#define ISO_OP_FPO 0x84 //FLOAT POWER
-#define ISO_OP_FMO 0x85 //FLOAT MODULO
+#define ISO_INT_TERMINATE      0x40
+#define ISO_INT_CONSOLE_OUTPUT 0x50
+#define ISO_INT_CONSOLE_INPUT  0x51
+#define ISO_INT_FILE_OPEN      0x60
+#define ISO_INT_FILE_CLOSE     0x61
+#define ISO_INT_FILE_SIZE      0x62
+#define ISO_INT_FILE_READ      0x63
+#define ISO_INT_FILE_WRITE     0x64
+#define ISO_INT_CLOCK          0x70
 
-typedef float iso_float;
-typedef struct {
-	iso_uint uint;
-	iso_float fp;
-} iso_uint_float;
-
-void iso_fp_run(
+void iso_io_run(
 	iso_vm *vm
 );
 

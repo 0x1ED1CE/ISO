@@ -1,15 +1,16 @@
 CC  = gcc -std=gnu99 -Wall -Wextra -O2
-#CC = i586-pc-msdosdjgpp-gcc -std=gnu99 -Wall -Wextra -O2
+#CC = i586-pc-msdosdjgpp-gcc -std=gnu99 -Wall -Wextra -O2 --ffast-math
 
 all: iso
 
-iso: isocon.c arger.o isoasm.o isovm.o isofp.o isoaux.o
+iso: isocon.c arger.o isoasm.o isovm.o isofp.o isoio.o isoaux.o
 	$(CC) isocon.c -o \
 	iso \
 	arger.o \
 	isoasm.o \
 	isovm.o \
 	isofp.o \
+	isoio.o \
 	isoaux.o 
 
 arger.o: arger.h arger.c
@@ -24,6 +25,9 @@ isovm.o: iso.h isovm.h isovm.c
 isofp.o: iso.h isovm.h isofp.h isofp.c
 	$(CC) -c isofp.c -o isofp.o
 
+isoio.o: iso.h isovm.h isoio.h isoio.c
+	$(CC) -c isoio.c -o isoio.o
+
 isoaux.o: iso.h isovm.h isoasm.h isoaux.h isoaux.c
 	$(CC) -c isoaux.c -o isoaux.o
 
@@ -34,4 +38,5 @@ clean:
 	isoasm.o \
 	isovm.o \
 	isofp.o \
+	isoio.o \
 	isoaux.o 

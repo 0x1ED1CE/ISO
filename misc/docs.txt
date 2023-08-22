@@ -27,27 +27,30 @@ SOFTWARE.
 ISO (Intermediate Script Object) is a stack oriented instruction format 
 intended for embedded applications.
 
-[OPCODES]
+[BASE INSTRUCTION SET]
  _____
 |0x00 |
 | NUM |
 |_____|
 |0x10 |
 | INT |
-|_____|_____________________________
-|0x20 |0x21 |0x22 |0x23 |0x24 |0x25 |
-| POS | DUP | POP | ROT | SET | GET |
-|_____|_____|_____|_____|_____|_____|
-|0x30 |0x31 |0x32 |0x33 |0x34 |
+|_____|_______________________
+|0x20 |0x21 |0x22 |0x23 |0x24 |
 | JMP | JEQ | JNE | JLS | JLE |
 |_____|_____|_____|_____|_____|_____
+|0x30 |0x31 |0x32 |0x33 |0x34 |0x35 |
+| POS | DUP | POP | ROT | SET | GET |
+|_____|_____|_____|_____|_____|_____|
 |0x40 |0x41 |0x42 |0x43 |0x44 |0x45 |
 | ADD | SUB | MUL | DIV | POW | MOD |
 |_____|_____|_____|_____|_____|_____|
 |0x50 |0x51 |0x52 |0x53 |0x54 |0x55 |
 | NOT | AND | BOR | XOR | LSH | RSH |
 |_____|_____|_____|_____|_____|_____|
-|0x60 |0x60 |
+
+[FLOATING POINT EXTENSION]
+ ___________
+|0x60 |0x61 |
 | FTU | UTF |
 |_____|_____|___________
 |0x70 |0x71 |0x72 |0x73 |
@@ -64,13 +67,13 @@ intended for embedded applications.
 |_____|
 |     |
 | RAW |
-|_____|_____
-|     |     |
-| DEF | REF |
-|_____|_____|
+|_____|
 |     |
 | GBL |
 |_____|___________________________________
 |     |     |     |     |     |     |     |
-| FUN | GSR | SEC | REC | CSR | RET | VAR |
+| FUN | GSR | CSR | SEC | REC | RET | VAR |
 |_____|_____|_____|_____|_____|_____|_____|
+
+[EXAMPLES]
+

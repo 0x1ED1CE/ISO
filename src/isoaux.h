@@ -27,21 +27,7 @@ SOFTWARE.
 #ifndef ISO_AUX_H
 #define ISO_AUX_H
 
-#define ISO_INT_TERMINATE      0x40
-#define ISO_INT_CONSOLE_OUTPUT 0x50
-#define ISO_INT_CONSOLE_INPUT  0x51
-#define ISO_INT_FILE_OPEN      0x60
-#define ISO_INT_FILE_CLOSE     0x61
-#define ISO_INT_FILE_SIZE      0x62
-#define ISO_INT_FILE_READ      0x63
-#define ISO_INT_FILE_WRITE     0x64
-#define ISO_INT_CLOCK          0x70
-
-void iso_aux_vm_debug_info(
-	iso_vm *vm
-);
-
-void iso_aux_handle_interrupt(
+void iso_aux_run(
 	iso_vm *vm
 );
 

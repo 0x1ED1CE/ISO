@@ -36,7 +36,9 @@ SOFTWARE.
 #define ISO_INT_STACK_OVERFLOW    0x31
 #define ISO_INT_STACK_UNDERFLOW   0x32
 
-typedef struct {
+typedef struct iso_vm iso_vm;
+
+struct iso_vm {
 	iso_uint  INT;
 	iso_uint  PC;
 	iso_uint  SP;
@@ -44,44 +46,44 @@ typedef struct {
 	iso_uint  stack_size;
 	iso_char *program;
 	iso_uint *stack;
-} iso_vm;
+};
 
 void iso_vm_interrupt(
-	iso_vm *context,
+	iso_vm *vm,
 	iso_uint interrupt
 );
 
 iso_char iso_vm_fetch(
-	iso_vm *context
+	iso_vm *vm
 );
 
 void iso_vm_push(
-	iso_vm *context,
+	iso_vm *vm,
 	iso_uint value
 );
 
 iso_uint iso_vm_pop(
-	iso_vm *context
+	iso_vm *vm
 );
 
 void iso_vm_set(
-	iso_vm *context,
+	iso_vm *vm,
 	iso_uint address,
 	iso_uint value
 );
 
 iso_uint iso_vm_get(
-	iso_vm *context,
+	iso_vm *vm,
 	iso_uint address
 );
 
 void iso_vm_jump(
-	iso_vm *context,
+	iso_vm *vm,
 	iso_uint address
 );
 
 void iso_vm_run(
-	iso_vm *context
+	iso_vm *vm
 );
 
 #endif

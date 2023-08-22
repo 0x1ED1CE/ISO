@@ -30,6 +30,7 @@ SOFTWARE.
 #include "isoasm.h"
 #include "isovm.h"
 #include "isofp.h"
+#include "isoio.h"
 #include "isoaux.h"
 
 #define ISO_DEFAULT_STACK_SIZE 64000
@@ -59,9 +60,6 @@ int main(
 	int opt_set_stack,par_set_stack;
 	int opt_run;
 	
-	unsigned int program_size = 0;
-	unsigned int stack_size   = ISO_DEFAULT_STACK_SIZE;
-	
 	arger_parse(argc,argv,"b",&opt_import_binary,&par_import_binary);
 	arger_parse(argc,argv,"s",&opt_set_stack,&par_set_stack);
 	arger_parse(argc,argv,"r",&opt_run,NULL);
@@ -75,6 +73,9 @@ int main(
 		
 		return 0;
 	}
+	
+	unsigned int program_size = 0;
+	unsigned int stack_size   = ISO_DEFAULT_STACK_SIZE;
 	
 	if (opt_set_stack && par_set_stack) { //Set stack size
 		stack_size=atoi(argv[opt_set_stack+1]);
@@ -138,9 +139,9 @@ int main(
 	
 	if (opt_run) { //Run program
 		iso_vm vm;
-		vm.INT = 0;
-		vm.PC  = 0;
-		vm.SP  = 0;
+		vm.INT          = 0;
+		vm.PC           = 0;
+		vm.SP           = 0;
 		vm.program_size = program_size;
 		vm.stack_size   = stack_size;
 		vm.program      = program;
@@ -148,8 +149,9 @@ int main(
 		
 		do {
 			iso_vm_run(&vm);
-			iso_fp_handle_interrupt(&vm);
-			iso_aux_handle_interrupt(&vm);
+			iso_fp_run(&vm);
+			iso_io_run(&vm);
+			iso_aux_run(&vm);
 		} while (vm.INT==0);
 		
 		return vm.INT;

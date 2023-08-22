@@ -22,34 +22,65 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/* ISO Floating Point Extension */
+#include <stdio.h>
+#include <stdlib.h>
 
-#include "isovm.h"
+#include "isoio.h"
 
-#ifndef ISO_FP_H
-#define ISO_FP_H
-
-#define ISO_OP_FTU 0x61 //FLOAT TO UNSIGNED
-#define ISO_OP_UTF 0x62 //UNSIGNED TO FLOAT
-#define ISO_OP_FEQ 0x70 //JUMP IF FLOAT EQUAL
-#define ISO_OP_FNE 0x71 //JUMP IF FLOAT NOT EQUAL
-#define ISO_OP_FLS 0x72 //JUMP IF FLOAT LESS THAN
-#define ISO_OP_FLE 0x73 //JUMP IF FLOAT LESS OR EQUAL
-#define ISO_OP_FAD 0x80 //FLOAT ADD
-#define ISO_OP_FSU 0x81 //FLOAT SUBTRACT
-#define ISO_OP_FMU 0x82 //FLOAT MULTIPLY
-#define ISO_OP_FDI 0x83 //FLOAT DIVIDE
-#define ISO_OP_FPO 0x84 //FLOAT POWER
-#define ISO_OP_FMO 0x85 //FLOAT MODULO
-
-typedef float iso_float;
-typedef struct {
-	iso_uint uint;
-	iso_float fp;
-} iso_uint_float;
-
-void iso_fp_run(
+void iso_io_run(
 	iso_vm *vm
-);
-
-#endif
+) {
+	if (vm->INT==ISO_INT_NONE)
+		return;
+	
+	iso_uint A,B;
+	
+	switch(vm->INT) {
+		case ISO_INT_CONSOLE_OUTPUT:
+			iso_vm_interrupt(vm,ISO_INT_NONE);
+			
+			B = iso_vm_pop(vm);
+			A = iso_vm_pop(vm);
+			
+			for (; A<B; A++) {
+				putc(iso_vm_get(vm,A),stdout);
+			}
+			
+			break;
+		case ISO_INT_CONSOLE_INPUT:
+			iso_vm_interrupt(vm,ISO_INT_NONE);
+			
+			A = 0;
+			B = 0;
+			
+			do {
+				B=(iso_uint)getc(stdin);
+				
+				if (B=='\n')
+					break;
+				
+				iso_vm_push(vm,B);
+				A+=1;
+			} while (vm->INT==ISO_INT_NONE);
+			
+			iso_vm_push(vm,A);
+			
+			break;
+		case ISO_INT_FILE_OPEN:
+			break;
+		case ISO_INT_FILE_CLOSE:
+			break;
+		case ISO_INT_FILE_SIZE:
+			break;
+		case ISO_INT_FILE_READ:
+			break;
+		case ISO_INT_FILE_WRITE:
+			break;
+		case ISO_INT_CLOCK:
+			break;
+		case ISO_INT_TERMINATE:
+			iso_vm_interrupt(vm,ISO_INT_NONE);
+			
+			exit((int)iso_vm_pop(vm));
+	}
+}
