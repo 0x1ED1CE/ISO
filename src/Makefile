@@ -28,7 +28,7 @@ isofp.o: iso.h isovm.h isofp.h isofp.c
 isoio.o: iso.h isovm.h isoio.h isoio.c
 	$(CC) -c isoio.c -o isoio.o
 
-isoaux.o: iso.h isovm.h isoasm.h isoaux.h isoaux.c
+isoaux.o: iso.h isovm.h isoaux.h isoaux.c
 	$(CC) -c isoaux.c -o isoaux.o
 
 clean:

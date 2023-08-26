@@ -102,6 +102,27 @@ iso_uint iso_vm_pop(
 	return stack[vm->SP];
 }
 
+void iso_vm_hop(
+	iso_vm *vm,
+	iso_uint address
+) {
+	if (vm->INT)
+		return;
+	
+	iso_uint stack_size = vm->stack_size;
+	
+	if (address>=stack_size) {
+		iso_vm_interrupt(
+			vm,
+			ISO_INT_STACK_OVERFLOW
+		);
+		
+		return;
+	}
+	
+	vm->SP = address;
+}
+
 void iso_vm_set(
 	iso_vm *vm,
 	iso_uint address,
@@ -212,53 +233,50 @@ void iso_vm_run(
 				iso_vm_jump(vm,A);
 				
 				break;
-			case ISO_OP_JEQ:
-				A = iso_vm_pop(vm);
-				C = iso_vm_pop(vm);
+			case ISO_OP_JMC:
 				B = iso_vm_pop(vm);
+				A = iso_vm_pop(vm);
 				
-				if (B==C)
-					iso_vm_jump(vm,A);
+				if (A)
+					iso_vm_jump(vm,B);
 				
 				break;
-			case ISO_OP_JNE:
-				A = iso_vm_pop(vm);
-				C = iso_vm_pop(vm);
+			case ISO_OP_CEQ:
 				B = iso_vm_pop(vm);
+				A = iso_vm_pop(vm);
 				
-				if (B!=C)
-					iso_vm_jump(vm,A);
+				iso_vm_push(vm,A==B);
 				
 				break;
-			case ISO_OP_JLS:
-				A = iso_vm_pop(vm);
-				C = iso_vm_pop(vm);
+			case ISO_OP_CNE:
 				B = iso_vm_pop(vm);
+				A = iso_vm_pop(vm);
 				
-				if (B<C)
-					iso_vm_jump(vm,A);
+				iso_vm_push(vm,A!=B);
 				
 				break;
-			case ISO_OP_JLE:
-				A = iso_vm_pop(vm);
-				C = iso_vm_pop(vm);
+			case ISO_OP_CLS:
 				B = iso_vm_pop(vm);
+				A = iso_vm_pop(vm);
 				
-				if (B<=C)
-					iso_vm_jump(vm,A);
+				iso_vm_push(vm,A<B);
+				
+				break;
+			case ISO_OP_CLE:
+				B = iso_vm_pop(vm);
+				A = iso_vm_pop(vm);
+				
+				iso_vm_push(vm,A<=B);
+				
+				break;
+			case ISO_OP_HOP:
+				A = iso_vm_pop(vm);
+				
+				iso_vm_hop(vm,A);
 				
 				break;
 			case ISO_OP_POS:
 				iso_vm_push(vm,*SP);
-				
-				break;
-			case ISO_OP_DUP:
-				A = iso_vm_pop(vm);
-				B = iso_vm_get(vm,*SP-1);
-				
-				for (; A>0; A--) {
-					iso_vm_push(vm,B);
-				}
 				
 				break;
 			case ISO_OP_POP:

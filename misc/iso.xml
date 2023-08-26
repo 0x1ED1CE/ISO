@@ -26,7 +26,7 @@
             <Keywords name="Folders in comment, close">&quot;</Keywords>
             <Keywords name="Keywords1">NUM</Keywords>
             <Keywords name="Keywords2">INT</Keywords>
-            <Keywords name="Keywords3">JMP JEQ JNE JLS JLE POS DUP POP ROT SET GET ADD SUB MUL DIV POW MOD NOT AND BOR XOR LSH RSH</Keywords>
+            <Keywords name="Keywords3">JMP JMC CEQ CNE CLS CLE HOP POS POP ROT SET GET ADD SUB MUL DIV POW MOD NOT AND BOR XOR LSH RSH</Keywords>
             <Keywords name="Keywords4">FTU UTF FEQ FNE FLS FLE FAD FSU FMU FDI FPO FMO</Keywords>
             <Keywords name="Keywords5">REM</Keywords>
             <Keywords name="Keywords6">RAW</Keywords>

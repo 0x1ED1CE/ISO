@@ -27,32 +27,6 @@ SOFTWARE.
 
 #define ISO_VERSION 0.4
 
-#define ISO_OP_NUM 0x00 //NUMBER
-#define ISO_OP_INT 0x10 //INTERRUPT
-#define ISO_OP_JMP 0x20 //JUMP
-#define ISO_OP_JEQ 0x21 //JUMP IF EQUAL
-#define ISO_OP_JNE 0x22 //JUMP IF NOT EQUAL
-#define ISO_OP_JLS 0x23 //JUMP IF LESS THAN
-#define ISO_OP_JLE 0x24 //JUMP IF LESS OR EQUAL
-#define ISO_OP_POS 0x30 //STACK POSITION
-#define ISO_OP_DUP 0x31 //DUPLICATE
-#define ISO_OP_POP 0x32 //POP
-#define ISO_OP_ROT 0x33 //ROTATE
-#define ISO_OP_SET 0x34 //SET ADDRESS
-#define ISO_OP_GET 0x35 //GET ADDRESS
-#define ISO_OP_ADD 0x40 //ADD
-#define ISO_OP_SUB 0x41 //SUBTRACT
-#define ISO_OP_MUL 0x42 //MULTIPLY
-#define ISO_OP_DIV 0x43 //DIVIDE
-#define ISO_OP_POW 0x44 //POWER
-#define ISO_OP_MOD 0x45 //MODULO
-#define ISO_OP_NOT 0x50 //NOT
-#define ISO_OP_AND 0x51 //AND
-#define ISO_OP_BOR 0x52 //OR
-#define ISO_OP_XOR 0x53 //XOR
-#define ISO_OP_LSH 0x54 //LEFT SHIFT
-#define ISO_OP_RSH 0x55 //RIGHT SHIFT
-
 typedef unsigned int  iso_uint;
 typedef unsigned char iso_char;
 

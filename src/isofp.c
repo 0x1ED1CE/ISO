@@ -58,45 +58,37 @@ void iso_fp_run(
 		case ISO_OP_FEQ:
 			iso_vm_interrupt(vm,ISO_INT_NONE);
 			
-			A.uint = iso_vm_pop(vm);
-			C.uint = iso_vm_pop(vm);
 			B.uint = iso_vm_pop(vm);
+			A.uint = iso_vm_pop(vm);
 			
-			if (B.fp==C.fp)
-				iso_vm_jump(vm,A.uint);
+			iso_vm_push(vm,A.fp==B.fp);
 			
 			break;
 		case ISO_OP_FNE:
 			iso_vm_interrupt(vm,ISO_INT_NONE);
 			
-			A.uint = iso_vm_pop(vm);
-			C.uint = iso_vm_pop(vm);
 			B.uint = iso_vm_pop(vm);
+			A.uint = iso_vm_pop(vm);
 			
-			if (B.fp!=C.fp)
-				iso_vm_jump(vm,A.uint);
+			iso_vm_push(vm,A.fp!=B.fp);
 			
 			break;
 		case ISO_OP_FLS:
 			iso_vm_interrupt(vm,ISO_INT_NONE);
 			
-			A.uint = iso_vm_pop(vm);
-			C.uint = iso_vm_pop(vm);
 			B.uint = iso_vm_pop(vm);
+			A.uint = iso_vm_pop(vm);
 			
-			if (B.fp<C.fp)
-				iso_vm_jump(vm,A.uint);
+			iso_vm_push(vm,A.fp<B.fp);
 			
 			break;
 		case ISO_OP_FLE:
 			iso_vm_interrupt(vm,ISO_INT_NONE);
 			
-			A.uint = iso_vm_pop(vm);
-			C.uint = iso_vm_pop(vm);
 			B.uint = iso_vm_pop(vm);
+			A.uint = iso_vm_pop(vm);
 			
-			if (B.fp<=C.fp)
-				iso_vm_jump(vm,A.uint);
+			iso_vm_push(vm,A.fp<=B.fp);
 			
 			break;
 		case ISO_OP_FAD:
