@@ -1,0 +1,128 @@
+REM "*************************************************************************"
+REM "* ISO STRING LIBRARY VERSION 1.0                                        *"
+REM "* COPYRIGHT (C) 2023 DICE                                               *"
+REM "*************************************************************************"
+
+DEF "STRING.WORD_SIZE",4
+
+FUN "STRING.LENGTH",
+	"LENGTH",
+	"STRING"
+	VAR "STRING" GET GET
+	VAR "LENGTH" SET
+
+FUN "STRING.GET",
+	"CHAR",
+	"POSITION",
+	"STRING"
+	SEC "BOUND_CHECK"
+		VAR "STRING"   GET GET
+		VAR "POSITION" GET CLE
+		REC "END"      JMC
+	SEC "GET_WORD"
+		VAR "STRING"           GET REM "Retrieve word containing char"
+		NUM 1                  ADD
+		VAR "POSITION"         GET
+		REF "STRING.WORD_SIZE" DIV ADD GET
+	SEC "SHIFT_WORD"
+		REF "STRING.WORD_SIZE"     REM "Calculate char offset"
+		NUM 1                  SUB
+		VAR "POSITION"         GET     
+		REF "STRING.WORD_SIZE" MOD SUB
+		NUM 8                  MUL RSH
+		NUM 0xFF               AND
+		VAR "CHAR"             SET
+	SEC "END"
+
+FUN "STRING.SET",
+	"CHAR",
+	"POSITION",
+	"STRING"
+	SEC "BOUND_CHECK"
+		VAR "STRING"   GET GET
+		VAR "POSITION" GET CLE 
+		REC "END"      JMC
+	SEC "GET_ADDRESS"
+		VAR "STRING"           GET     REM "Calculate address of word"
+		NUM 1                  ADD
+		VAR "POSITION"         GET
+		REF "STRING.WORD_SIZE" DIV ADD
+		VAR "ADDRESS"          SET
+	SEC "GET_OFFSET"
+		REF "STRING.WORD_SIZE"         REM "Calculate char offset"
+		NUM 1                  SUB
+		VAR "POSITION"         GET     
+		REF "STRING.WORD_SIZE" MOD SUB
+		NUM 8                  MUL
+		VAR "OFFSET"           SET
+	SEC "CREATE_BIT_MASK"
+		NUM 0xFF                       REM "Create bit mask"
+		VAR "OFFSET"           GET LSH
+		VAR "MASK"             SET
+	SEC "BIT_BLIT"
+		VAR "ADDRESS"          GET GET REM "Blit character"
+		VAR "MASK"             GET NOT AND
+		VAR "CHAR"             GET
+		VAR "OFFSET"           GET LSH BOR
+		VAR "ADDRESS"          GET SET
+	SEC "END"
+
+FUN "STRING.UINT_TO_STRING",
+	"NUMBER",
+	"STRING"
+	SEC "SETUP"
+		NUM 0
+		VAR "DIGIT"   SET
+		VAR "NUMBER"  GET
+		VAR "VALUE"   SET
+		VAR "STRING"  GET GET
+		VAR "LENGTH"  SET
+	SEC "COUNT"
+		VAR "DIGIT"   GET REM "Count number of digits"
+		NUM 1         ADD
+		VAR "DIGIT"   SET
+		VAR "VALUE"   GET
+		NUM 10 DIV    DUP
+		VAR "VALUE"   SET
+		NUM 0         CNE
+		REC "COUNT"   JMC
+		VAR "NUMBER"  GET
+		VAR "VALUE"   SET
+	SEC "CONVERT"
+		VAR "VALUE"   GET REM "Get least significant ASCII value"
+		NUM 10        MOD 
+		NUM "0"       ADD
+		VAR "DIGIT"   GET REM "Apply character to string"
+		NUM 1         SUB
+		VAR "STRING"  GET 
+		RUN "STRING.SET" 
+		POP POP
+		VAR "DIGIT"   GET REM "Move to next character"
+		NUM 1         SUB
+		VAR "DIGIT"   SET
+		VAR "VALUE"   GET REM "Remove least significant value"
+		NUM 10        DIV
+		VAR "VALUE"   SET
+		VAR "VALUE"   GET REM "Repeat"
+		NUM 0         CNE
+		VAR "DIGIT"   GET
+		NUM 0 CNE     AND
+		REC "CONVERT" JMC
+
+FUN "STRING.FLOAT_TO_STRING",
+	"FLOAT",
+	"STRING"
+	SEC "SETUP"
+		NUM 0 VAR "DIGIT" SET
+		NUM 0 VAR "POINT" SET
+		VAR "STRING"      GET GET
+		VAR "LENGTH"      SET
+
+FUN "STRING.STRING_TO_UINT",
+	"NUMBER",
+	"STRING"
+
+FUN "STRING.COMPARE",
+	"MATCH",
+	"STRING_A",
+	"STRING_B"

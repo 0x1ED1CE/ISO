@@ -2,7 +2,13 @@ local lexer={}
 
 -------------------------------------------------------------------------------
 
-lexer.warn=function(lexer,filename,row,column,message)
+lexer.warn=function(
+	lexer,
+	filename,
+	row,
+	column,
+	message
+)
 	print((
 		string.char(27).."[93m[WARNING]"..
 		string.char(27).."[36m[%s,%d,%d]"..
@@ -15,7 +21,13 @@ lexer.warn=function(lexer,filename,row,column,message)
 	))
 end
 
-lexer.report=function(lexer,filename,row,column,message)
+lexer.report=function(
+	lexer,
+	filename,
+	row,
+	column,
+	message
+)
 	print((
 		string.char(27).."[91m[SYNTAX ERROR]"..
 		string.char(27).."[36m[%s,%d,%d]"..
@@ -31,8 +43,14 @@ end
 
 -------------------------------------------------------------------------------
 
-lexer.step=function(lexer,context)
-	if context.source:sub(context.index,context.index)=="\n" then
+lexer.step=function(
+	lexer,
+	context
+)
+	if context.source:sub(
+		context.index,
+		context.index
+	)=="\n" then
 		context.row    = context.row+1
 		context.column = 0
 	end
@@ -40,7 +58,10 @@ lexer.step=function(lexer,context)
 	context.index  = context.index+1
 	context.column = context.column+1
 	
-	return context.source:sub(context.index,context.index)
+	return context.source:sub(
+		context.index,
+		context.index
+	)
 end
 
 -------------------------------------------------------------------------------
@@ -247,7 +268,12 @@ end
 
 -------------------------------------------------------------------------------
 
-lexer.lex=function(lexer,source,filename,tokens)
+lexer.lex=function(
+	lexer,
+	source,
+	filename,
+	tokens
+)
 	local context={
 		source   = source.." ",
 		filename = filename,

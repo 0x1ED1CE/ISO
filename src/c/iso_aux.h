@@ -22,17 +22,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef ISO_H
-#define ISO_H
+#include "iso_vm.h"
 
-#define ISO_VERSION 0.6
+#ifndef ISO_AUX_H
+#define ISO_AUX_H
 
-typedef unsigned int  iso_uint;
-typedef unsigned char iso_char;
-typedef float         iso_float;
-typedef struct {
-	iso_uint  uint;
-	iso_float fp;
-} iso_word;
+void iso_aux_vm_debug_info(
+	iso_vm *vm
+);
+
+void iso_aux_run(
+	iso_vm *vm
+);
 
 #endif

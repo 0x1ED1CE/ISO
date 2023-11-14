@@ -22,9 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ]]
 
-local lexer    = require "lexer"
-local parser   = require "parser"
-local compiler = require "compiler"
+local lexer     = require "lexer"
+local parser    = require "parser"
+local validator = require "validator"
+local optimizer = require "optimizer"
+local compiler  = require "compiler"
 
 local table_unpack = unpack or table.unpack
 
@@ -42,12 +44,16 @@ end
 -------------------------------------------------------------------------------
 
 if #arg==0 then
-	print("ISO v1 Copyright (C) 2023 Dice")
-	print("Usage: iso -i <file> -e <file>")
-	print("Options:")
-	print("-i	Import source")
-	print("-e	Export binary")
-	print("-s   Export symbol")
+	print(
+		"ISO v0.6 Copyright (C) 2023 Dice\n"..
+		"Usage: iso -i <file> -e <file>\n"..
+		"Options:\n"..
+		"-i\tImport source\n"..
+		"-e\tExport binary\n"..
+		"-h\tExport header\n"..
+		"-s\tExport symbol\n"..
+		"-o\tOptimize"
+	)
 	
 	return
 end
@@ -71,7 +77,7 @@ for _,argument in ipairs(arguments) do
 	if argument[1]=="-i" then
 		for i=2,#argument do
 			local filename = argument[i]
-			local file     = io.open(filename,"r")
+			local file     = io.open(filename,"rb")
 			
 			if not file then
 				report("Cannot open file: '"..filename.."'")
@@ -92,15 +98,52 @@ for _,argument in ipairs(arguments) do
 		end
 	elseif argument[1]=="-e" then
 		local filename = argument[2]
-		local file     = io.open(filename,"w")
+		local file     = io.open(filename,"wb")
 		
 		if not file then
 			report("Cannot open file: '"..filename.."'")
 		end
 		
-		local compilation=compiler:compile(source)
+		local output = compiler:compile(source)
+		local binary = table.concat(output.bytecode)
 		
-		file:write(table.concat(compilation.bytecode))
+		file:write(binary)
+		file:close()
+	elseif argument[1]=="-h" then
+		local filename = argument[2]
+		local file     = io.open(filename,"wb")
+		
+		if not file then
+			report("Cannot open file: '"..filename.."'")
+		end
+		
+		local output = compiler:compile(source)
+		local binary = table.concat(output.bytecode)
+		
+		file:write(
+			"unsigned char "..
+			filename
+			:match("^.+[/\\](.+)$")
+			:gsub("[%s%.]","_")
+			:upper()..
+			"[]={\n"
+		)
+		
+		for i=1,#binary do
+			file:write(("0x%.2X"):format(
+				binary:sub(i,i):byte()
+			))
+			
+			if i~=#binary then
+				file:write(",")
+			end
+			
+			if i%8==0 or i==#binary then
+				file:write("\n")
+			end
+		end
+		
+		file:write("};\n")
 		file:close()
 	elseif argument[1]=="-s" then
 		local filename = argument[2]
@@ -112,7 +155,6 @@ for _,argument in ipairs(arguments) do
 		
 		local compilation=compiler:compile(source)
 		
-		file:write("[GLOBALS]\n")
 		for index,global in ipairs(compilation.globals) do
 			file:write(("SP: %.8X - %s\n"):format(
 				index-1,
@@ -120,7 +162,6 @@ for _,argument in ipairs(arguments) do
 			))
 		end
 		
-		file:write("[FUNCTIONS]\n")
 		for _,subroutine in ipairs(compilation.subroutines) do
 			file:write(("PC: %.8X - %s\n"):format(
 				subroutine.address,
@@ -129,5 +170,7 @@ for _,argument in ipairs(arguments) do
 		end
 		
 		file:close()
+	elseif argument[1]=="-o" then
+		optimizer:optimize(source)
 	end
 end

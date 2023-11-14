@@ -1,41 +1,31 @@
-CC = gcc -std=gnu99 -Wall -Wextra -O2
-#CC = i586-pc-msdosdjgpp-gcc -std=gnu99 -Wall -Wextra -O2 --ffast-
-RM = rm -f
+CC = gcc -std=gnu99 -Wall -Wextra -s -O2
 
 all: iso
 
-iso: isocon.c arger.o isovm.o isofp.o isoio.o isoaux.o
-	$(CC) isocon.c -o \
+iso: iso_con.c arger.o iso_vm.o iso_io.o iso_aux.o
+	$(CC) iso_con.c -o \
 	iso \
 	arger.o \
-	isovm.o \
-	isofp.o \
-	isoio.o \
-	isoaux.o 
+	iso_vm.o \
+	iso_io.o \
+	iso_aux.o 
 
 arger.o: arger.h arger.c
 	$(CC) -c arger.c -o arger.o
 
-#isoasm.o: iso.h isoasm.h isoasm.c
-#	$(CC) -c isoasm.c -o isoasm.o
+iso_vm.o: iso.h iso_vm.h iso_vm.c
+	$(CC) -c iso_vm.c -o iso_vm.o
 
-isovm.o: iso.h isovm.h isovm.c
-	$(CC) -c isovm.c -o isovm.o
+iso_io.o: iso.h iso_vm.h iso_io.h iso_io.c
+	$(CC) -c iso_io.c -o iso_io.o
 
-isofp.o: iso.h isovm.h isofp.h isofp.c
-	$(CC) -c isofp.c -o isofp.o
-
-isoio.o: iso.h isovm.h isoio.h isoio.c
-	$(CC) -c isoio.c -o isoio.o
-
-isoaux.o: iso.h isovm.h isoaux.h isoaux.c
-	$(CC) -c isoaux.c -o isoaux.o
+iso_aux.o: iso.h iso_vm.h iso_aux.h iso_aux.c
+	$(CC) -c iso_aux.c -o iso_aux.o
 
 clean:
 	$(RM) \
 	iso \
 	arger.o \
-	isovm.o \
-	isofp.o \
-	isoio.o \
-	isoaux.o 
+	iso_vm.o \
+	iso_io.o \
+	iso_aux.o 

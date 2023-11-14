@@ -22,17 +22,65 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef ISO_H
-#define ISO_H
+#include <stdio.h>
 
-#define ISO_VERSION 0.6
+#include "iso_aux.h"
 
-typedef unsigned int  iso_uint;
-typedef unsigned char iso_char;
-typedef float         iso_float;
-typedef struct {
-	iso_uint  uint;
-	iso_float fp;
-} iso_word;
+void iso_aux_vm_debug_info(
+	iso_vm *vm
+) {
+	printf(
+		"INT: %.8X\n"
+		"PC:  %.8X\n"
+		"SP:  %.8X\n\n"
+		"CALL TRACE:\n",
+		vm->INT,
+		vm->PC,
+		vm->SP
+	);
+	
+	iso_uint callback=vm->stack[0];
+	
+	while (
+		callback!=0 && 
+		callback<vm->stack_size
+	) {
+		printf("%.8X\n",vm->stack[callback-1]);
+		callback=vm->stack[callback];
+	}
+}
 
-#endif
+void iso_aux_run(
+	iso_vm *vm
+) {
+	if (vm->INT==ISO_INT_NONE)
+		return;
+	
+	switch(vm->INT) {
+		case ISO_INT_ILLEGAL_OPERATION:
+			printf("ILLEGAL OPERATION\n\n");
+			iso_aux_vm_debug_info(vm);
+			
+			break;
+		case ISO_INT_INVALID_JUMP:
+			printf("JUMP TO INVALID ADDRESS\n\n");
+			iso_aux_vm_debug_info(vm);
+			
+			break;
+		case ISO_INT_OUT_OF_BOUNDS:
+			printf("MEMORY OUT OF BOUNDS\n\n");
+			iso_aux_vm_debug_info(vm);
+			
+			break;
+		case ISO_INT_STACK_OVERFLOW:
+			printf("STACK OVERFLOW\n\n");
+			iso_aux_vm_debug_info(vm);
+			
+			break;
+		case ISO_INT_STACK_UNDERFLOW:
+			printf("STACK UNDERFLOW\n\n");
+			iso_aux_vm_debug_info(vm);
+			
+			break;
+	}
+}

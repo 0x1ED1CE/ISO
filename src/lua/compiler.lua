@@ -13,7 +13,13 @@ local compiler={}
 
 -------------------------------------------------------------------------------
 
-compiler.warn=function(compiler,filename,row,column,message)
+compiler.warn=function(
+	compiler,
+	filename,
+	row,
+	column,
+	message
+)
 	print((
 		string.char(27).."[93m[WARNING]"..
 		string.char(27).."[36m[%s,%d,%d]"..
@@ -26,7 +32,13 @@ compiler.warn=function(compiler,filename,row,column,message)
 	))
 end
 
-compiler.report=function(compiler,filename,row,column,message)
+compiler.report=function(
+	compiler,
+	filename,
+	row,
+	column,
+	message
+)
 	print((
 		string.char(27).."[91m[COMPILATION ERROR]"..
 		string.char(27).."[36m[%s,%d,%d]"..
@@ -42,56 +54,126 @@ end
 
 -------------------------------------------------------------------------------
 
-compiler.paste_uint32=function(compiler,buffer,address,value)
+compiler.paste_uint32=function(
+	compiler,
+	buffer,
+	address,
+	value
+)
 	buffer[address]   = string.char(bit_and(bit_rshift(value,24),0xFF))
 	buffer[address+1] = string.char(bit_and(bit_rshift(value,16),0xFF))
 	buffer[address+2] = string.char(bit_and(bit_rshift(value,8),0xFF))
 	buffer[address+3] = string.char(bit_and(value,0xFF))
 end
 
+compiler.paste_float32=function(
+	compiler,
+	buffer,
+	address,
+	value
+)
+	if value==0.0 then
+		compiler:paste_uint32(
+			buffer,
+			address,
+			0
+		)
+		
+		return
+	end
+
+	local sign=0
+	if value<0.0 then
+		sign=0x80
+		value=-value
+	end
+
+	local mant,expo=math.frexp(value)
+	local hext={}
+
+	if mant~=mant then
+		hext[#hext+1]=string.char(0xFF,0x88,0x00,0x00)
+	elseif mant==math.huge or expo>0x80 then
+		if sign==0 then
+			hext[#hext+1]=string.char(0x7F,0x80,0x00,0x00)
+		else
+			hext[#hext+1]=string.char(0xFF,0x80,0x00,0x00)
+		end
+	elseif (mant==0.0 and expo==0) or expo<-0x7E then
+		hext[#hext+1]=string.char(sign,0x00,0x00,0x00)
+	else
+		expo=expo+0x7E
+		mant=(mant*2.0-1.0)*math.ldexp(0.5,24)
+		hext[#hext+1]=string.char(
+			sign+math.floor(expo/0x2),
+			(expo%0x2)*0x80+math.floor(mant/0x10000),
+			math.floor(mant/0x100)%0x100,
+			mant%0x100
+		)
+	end
+
+	compiler:paste_uint32(
+		buffer,
+		address,
+		tonumber(string.gsub(table.concat(hext),"(.)",
+			function(c)
+				return string.format(
+					"%02X%s",
+					string.byte(c),""
+				)
+			end),
+			16
+		)
+	)
+end
+
 -------------------------------------------------------------------------------
 
 compiler.translator={units={}}
 
-compiler.translator.units["INT"] = string.char(0x01)
-compiler.translator.units["JMP"] = string.char(0x10)
-compiler.translator.units["JMC"] = string.char(0x11)
-compiler.translator.units["CEQ"] = string.char(0x12)
-compiler.translator.units["CNE"] = string.char(0x13)
-compiler.translator.units["CLS"] = string.char(0x14)
-compiler.translator.units["CLE"] = string.char(0x15)
-compiler.translator.units["HOP"] = string.char(0x20)
-compiler.translator.units["POS"] = string.char(0x21)
-compiler.translator.units["DUP"] = string.char(0x22)
-compiler.translator.units["POP"] = string.char(0x23)
-compiler.translator.units["SET"] = string.char(0x24)
-compiler.translator.units["GET"] = string.char(0x25)
-compiler.translator.units["ADD"] = string.char(0x30)
-compiler.translator.units["SUB"] = string.char(0x31)
-compiler.translator.units["MUL"] = string.char(0x32)
-compiler.translator.units["DIV"] = string.char(0x33)
-compiler.translator.units["POW"] = string.char(0x34)
-compiler.translator.units["MOD"] = string.char(0x35)
-compiler.translator.units["NOT"] = string.char(0x40)
-compiler.translator.units["AND"] = string.char(0x41)
-compiler.translator.units["BOR"] = string.char(0x42)
-compiler.translator.units["XOR"] = string.char(0x43)
-compiler.translator.units["LSH"] = string.char(0x44)
-compiler.translator.units["RSH"] = string.char(0x45)
-compiler.translator.units["FTU"] = string.char(0x50)
-compiler.translator.units["UTF"] = string.char(0x51)
-compiler.translator.units["FEQ"] = string.char(0x52)
-compiler.translator.units["FNE"] = string.char(0x53)
-compiler.translator.units["FLS"] = string.char(0x54)
-compiler.translator.units["FLE"] = string.char(0x55)
-compiler.translator.units["FAD"] = string.char(0x60)
-compiler.translator.units["FSU"] = string.char(0x61)
-compiler.translator.units["FMU"] = string.char(0x62)
-compiler.translator.units["FDI"] = string.char(0x63)
-compiler.translator.units["FPO"] = string.char(0x64)
-compiler.translator.units["FMO"] = string.char(0x65)
+compiler.translator.units["INT"] = string.char(0x10)
+compiler.translator.units["JMP"] = string.char(0x20)
+compiler.translator.units["JMC"] = string.char(0x21)
+compiler.translator.units["CEQ"] = string.char(0x22)
+compiler.translator.units["CNE"] = string.char(0x23)
+compiler.translator.units["CLS"] = string.char(0x24)
+compiler.translator.units["CLE"] = string.char(0x25)
+compiler.translator.units["HOP"] = string.char(0x30)
+compiler.translator.units["POS"] = string.char(0x31)
+compiler.translator.units["DUP"] = string.char(0x32)
+compiler.translator.units["POP"] = string.char(0x33)
+compiler.translator.units["SET"] = string.char(0x34)
+compiler.translator.units["GET"] = string.char(0x35)
+compiler.translator.units["ADD"] = string.char(0x40)
+compiler.translator.units["SUB"] = string.char(0x41)
+compiler.translator.units["MUL"] = string.char(0x42)
+compiler.translator.units["DIV"] = string.char(0x43)
+compiler.translator.units["POW"] = string.char(0x44)
+compiler.translator.units["MOD"] = string.char(0x45)
+compiler.translator.units["NOT"] = string.char(0x50)
+compiler.translator.units["AND"] = string.char(0x51)
+compiler.translator.units["BOR"] = string.char(0x52)
+compiler.translator.units["XOR"] = string.char(0x53)
+compiler.translator.units["LSH"] = string.char(0x54)
+compiler.translator.units["RSH"] = string.char(0x55)
+compiler.translator.units["FTU"] = string.char(0x60)
+compiler.translator.units["UTF"] = string.char(0x61)
+compiler.translator.units["FEQ"] = string.char(0x62)
+compiler.translator.units["FNE"] = string.char(0x63)
+compiler.translator.units["FLS"] = string.char(0x64)
+compiler.translator.units["FLE"] = string.char(0x65)
+compiler.translator.units["FAD"] = string.char(0x70)
+compiler.translator.units["FSU"] = string.char(0x71)
+compiler.translator.units["FMU"] = string.char(0x72)
+compiler.translator.units["FDI"] = string.char(0x73)
+compiler.translator.units["FPO"] = string.char(0x74)
+compiler.translator.units["FMO"] = string.char(0x75)
 
-compiler.translator.units["NUM"]=function(compiler,context,operation)
+compiler.translator.units["NUM"]=function(
+	compiler,
+	context,
+	operation
+)
 	if #operation.parameters>1 then
 		compiler:report(
 			operation.filename,
@@ -101,10 +183,21 @@ compiler.translator.units["NUM"]=function(compiler,context,operation)
 		)
 	end
 	
-	local bytecode=context.bytecode
-	local wordsize=1
+	local parameters = operation.parameters
+	local bytecode   = context.bytecode
+	local wordsize   = 1
+	local values     = parameters[1]
 	
-	for _,value in ipairs(operation.parameters[1]) do
+	if #values>0xFF then
+		compiler:report(
+			operation.filename,
+			operation.row,
+			operation.column,
+			"Too many numbers"
+		)
+	end
+	
+	for _,value in ipairs(values) do
 		local bytes=0
 		
 		while value>0 do
@@ -117,11 +210,19 @@ compiler.translator.units["NUM"]=function(compiler,context,operation)
 		end
 	end
 	
-	bytecode[#bytecode+1] = string.char(0x00)
-	bytecode[#bytecode+1] = string.char(wordsize)
-	bytecode[#bytecode+1] = string.char(#operation.parameters[1])
+	if wordsize>0x0F then
+		compiler:report(
+			operation.filename,
+			operation.row,
+			operation.column,
+			"Number is too large"
+		)
+	end
 	
-	for _,value in ipairs(operation.parameters[1]) do
+	bytecode[#bytecode+1] = string.char(wordsize-1)
+	bytecode[#bytecode+1] = string.char(#values)
+	
+	for _,value in ipairs(values) do
 		for i=(wordsize-1)*8,0,-8 do
 			bytecode[#bytecode+1] = string.char(
 				bit_and(bit_rshift(value,i),0xFF)
@@ -130,14 +231,134 @@ compiler.translator.units["NUM"]=function(compiler,context,operation)
 	end
 end
 
-compiler.translator.units["REM"]=function(compiler,context,operation)
-end
-
-compiler.translator.units["RAW"]=function(compiler,context,operation)
+compiler.translator.units["FPU"]=function(
+	compiler,
+	context,
+	operation
+)
+	if #operation.parameters>1 then
+		compiler:report(
+			operation.filename,
+			operation.row,
+			operation.column,
+			"Too many parameters"
+		)
+	end
 	
+	local parameters = operation.parameters
+	local bytecode   = context.bytecode
+	local wordsize   = 4
+	local values     = parameters[1]
+	
+	if #values>0xFF then
+		compiler:report(
+			operation.filename,
+			operation.row,
+			operation.column,
+			"Too many numbers"
+		)
+	end
+	
+	bytecode[#bytecode+1] = string.char(wordsize-1)
+	bytecode[#bytecode+1] = string.char(#values)
+	
+	for _,value in ipairs(values) do
+		compiler:paste_float32(
+			bytecode,
+			#bytecode+1,
+			value
+		)
+	end
 end
 
-compiler.translator.units["DEF"]=function(compiler,context,operation)
+compiler.translator.units["REM"]=function(
+	compiler,
+	context,
+	operation
+)
+end
+
+compiler.translator.units["RAW"]=function(
+	compiler,
+	context,
+	operation
+)
+	if #operation.parameters~=2 then
+		compiler:report(
+			operation.filename,
+			operation.row,
+			operation.column,
+			"Expected 2 parameters"
+		)
+	elseif #operation.parameters[1]~=1 then
+		compiler:report(
+			operation.filename,
+			operation.row,
+			operation.column,
+			"First parameter must be single value"
+		)
+	end
+	
+	local parameters = operation.parameters
+	local bytecode   = context.bytecode
+	local wordsize   = parameters[1]
+	local values     = parameters[2]
+	
+	for _,value in ipairs(values) do
+		for i=(wordsize-1)*8,0,-8 do
+			bytecode[#bytecode+1] = string.char(
+				bit_and(bit_rshift(value,i),0xFF)
+			)
+		end
+	end
+end
+
+compiler.translator.units["STR"]=function(
+	compiler,
+	context,
+	operation
+)
+	local parameters = operation.parameters
+	local bytecode   = context.bytecode
+	local values     = parameters[1]
+	local words      = math.ceil(#values/4)
+	
+	compiler.translator.translate(
+		compiler,
+		context,
+		{
+			filename   = operation.filename,
+			row        = operation.row,
+			column     = operation.column,
+			opcode     = "NUM",
+			parameters = {{#values}}
+		}
+	)
+	
+	bytecode[#bytecode+1] = string.char(math.min(#values-1,0x03))
+	bytecode[#bytecode+1] = string.char(math.ceil(#values/4))
+	
+	for i=1,math.ceil(#values/4)*4 do
+		local value=values[i] or 0
+		
+		if value>0xFF then
+			compiler:report(
+				operation.filename,
+				operation.row,
+				operation.column,
+				"Character cannot exceed 255"
+			)
+		end
+		
+		bytecode[#bytecode+1] = string.char(value)
+	end
+end
+
+compiler.translator.units["DEF"]=function(
+	compiler,
+	context,
+	operation
+)
 	if (
 		#operation.parameters~=2 or
 		#operation.parameters[1]==0 or
@@ -191,7 +412,11 @@ compiler.translator.units["DEF"]=function(compiler,context,operation)
 	end
 end
 
-compiler.translator.units["REF"]=function(compiler,context,operation)
+compiler.translator.units["REF"]=function(
+	compiler,
+	context,
+	operation
+)
 	if #operation.parameters==0 then
 		compiler:report(
 			operation.filename,
@@ -253,7 +478,11 @@ compiler.translator.units["REF"]=function(compiler,context,operation)
 	end
 end
 
-compiler.translator.units["GBL"]=function(compiler,context,operation)
+compiler.translator.units["GBL"]=function(
+	compiler,
+	context,
+	operation
+)
 	if #operation.parameters==0 then
 		compiler:report(
 			operation.filename,
@@ -312,7 +541,11 @@ compiler.translator.units["GBL"]=function(compiler,context,operation)
 	)
 end
 
-compiler.translator.units["VAR"]=function(compiler,context,operation)
+compiler.translator.units["VAR"]=function(
+	compiler,
+	context,
+	operation
+)
 	if #operation.parameters==0 then
 		compiler:report(
 			operation.filename,
@@ -446,7 +679,11 @@ compiler.translator.units["VAR"]=function(compiler,context,operation)
 	end
 end
 
-compiler.translator.units["FUN"]=function(compiler,context,operation)
+compiler.translator.units["FUN"]=function(
+	compiler,
+	context,
+	operation
+)
 	if #operation.parameters==0 then
 		compiler:report(
 			operation.filename,
@@ -538,8 +775,7 @@ compiler.translator.units["FUN"]=function(compiler,context,operation)
 		}
 		
 		bytecode[#bytecode+1] = compiler.translator.units["POS"]
-		bytecode[#bytecode+1] = string.char(0x00) --NUM
-		bytecode[#bytecode+1] = string.char(0x04)
+		bytecode[#bytecode+1] = string.char(0x03) --NUM
 		bytecode[#bytecode+1] = string.char(0x01)
 		bytecode[#bytecode+1] = string.char(0x00)
 		bytecode[#bytecode+1] = string.char(0x00)
@@ -557,7 +793,11 @@ compiler.translator.units["FUN"]=function(compiler,context,operation)
 	end
 end
 
-compiler.translator.units["GSR"]=function(compiler,context,operation)
+compiler.translator.units["GSR"]=function(
+	compiler,
+	context,
+	operation
+)
 	if #operation.parameters==0 then
 		compiler:report(
 			operation.filename,
@@ -581,11 +821,10 @@ compiler.translator.units["GSR"]=function(compiler,context,operation)
 	callers[#callers+1]={
 		operation = operation,
 		tag       = parameters[1],
-		address   = #bytecode+4
+		address   = #bytecode+3
 	}
 	
-	bytecode[#bytecode+1] = string.char(0x00) --NUM
-	bytecode[#bytecode+1] = string.char(0x04)
+	bytecode[#bytecode+1] = string.char(0x03) --NUM
 	bytecode[#bytecode+1] = string.char(0x01)
 	bytecode[#bytecode+1] = string.char(0x00)
 	bytecode[#bytecode+1] = string.char(0x00)
@@ -593,7 +832,11 @@ compiler.translator.units["GSR"]=function(compiler,context,operation)
 	bytecode[#bytecode+1] = string.char(0x00)
 end
 
-compiler.translator.units["SEC"]=function(compiler,context,operation)
+compiler.translator.units["SEC"]=function(
+	compiler,
+	context,
+	operation
+)
 	if #operation.parameters==0 then
 		compiler:report(
 			operation.filename,
@@ -660,7 +903,11 @@ compiler.translator.units["SEC"]=function(compiler,context,operation)
 	end
 end
 
-compiler.translator.units["REC"]=function(compiler,context,operation)
+compiler.translator.units["REC"]=function(
+	compiler,
+	context,
+	operation
+)
 	if #operation.parameters==0 then
 		compiler:report(
 			operation.filename,
@@ -696,11 +943,10 @@ compiler.translator.units["REC"]=function(compiler,context,operation)
 	recalls[#recalls+1]={
 		operation = operation,
 		tag       = parameters[1],
-		address   = #bytecode+4
+		address   = #bytecode+3
 	}
 	
-	bytecode[#bytecode+1] = string.char(0x00) --NUM
-	bytecode[#bytecode+1] = string.char(0x04)
+	bytecode[#bytecode+1] = string.char(0x03) --NUM
 	bytecode[#bytecode+1] = string.char(0x01)
 	bytecode[#bytecode+1] = string.char(0x00)
 	bytecode[#bytecode+1] = string.char(0x00)
@@ -708,7 +954,11 @@ compiler.translator.units["REC"]=function(compiler,context,operation)
 	bytecode[#bytecode+1] = string.char(0x00)
 end
 
-compiler.translator.units["RUN"]=function(compiler,context,operation)
+compiler.translator.units["RUN"]=function(
+	compiler,
+	context,
+	operation
+)
 	if #operation.parameters>1 then
 		compiler:report(
 			operation.filename,
@@ -722,34 +972,21 @@ compiler.translator.units["RUN"]=function(compiler,context,operation)
 	local bytecode   = context.bytecode
 	local callers    = context.callers
 	
-	if #operation.parameters==1 then
-		callers[#callers+1]={
-			operation = operation,
-			tag       = parameters[1],
-			address   = #bytecode+4
-		}
-		
-		bytecode[#bytecode+1] = string.char(0x00) --NUM
-		bytecode[#bytecode+1] = string.char(0x04)
-		bytecode[#bytecode+1] = string.char(0x01)
-		bytecode[#bytecode+1] = string.char(0x00)
-		bytecode[#bytecode+1] = string.char(0x00)
-		bytecode[#bytecode+1] = string.char(0x00)
-		bytecode[#bytecode+1] = string.char(0x00)
+	if #operation.parameters==0 then
+		compiler.translator.translate(
+			compiler,
+			context,
+			{
+				filename   = operation.filename,
+				row        = operation.row,
+				column     = operation.column,
+				opcode     = "GBL",
+				parameters = {{("ISO_CALL_ADDRESS"):byte(1,16)}}
+			}
+		)
+		bytecode[#bytecode+1] = compiler.translator.units["SET"]
 	end
 	
-	compiler.translator.translate(
-		compiler,
-		context,
-		{
-			filename   = operation.filename,
-			row        = operation.row,
-			column     = operation.column,
-			opcode     = "GBL",
-			parameters = {{("ISO_CALL_ADDRESS"):byte(1,16)}}
-		}
-	)
-	bytecode[#bytecode+1] = compiler.translator.units["SET"]
 	compiler.translator.translate(
 		compiler,
 		context,
@@ -787,8 +1024,7 @@ compiler.translator.units["RUN"]=function(compiler,context,operation)
 		}
 	)
 	bytecode[#bytecode+1] = compiler.translator.units["SET"]
-	bytecode[#bytecode+1] = string.char(0x00) --NUM
-	bytecode[#bytecode+1] = string.char(0x04)
+	bytecode[#bytecode+1] = string.char(0x03) --NUM
 	bytecode[#bytecode+1] = string.char(0x01)
 	bytecode[#bytecode+1] = string.char(0x00)
 	bytecode[#bytecode+1] = string.char(0x00)
@@ -809,18 +1045,35 @@ compiler.translator.units["RUN"]=function(compiler,context,operation)
 		}
 	)
 	bytecode[#bytecode+1] = compiler.translator.units["SET"]
-	compiler.translator.translate(
-		compiler,
-		context,
-		{
-			filename   = operation.filename,
-			row        = operation.row,
-			column     = operation.column,
-			opcode     = "GBL",
-			parameters = {{("ISO_CALL_ADDRESS"):byte(1,16)}}
+	
+	if #operation.parameters==0 then
+		compiler.translator.translate(
+			compiler,
+			context,
+			{
+				filename   = operation.filename,
+				row        = operation.row,
+				column     = operation.column,
+				opcode     = "GBL",
+				parameters = {{("ISO_CALL_ADDRESS"):byte(1,16)}}
+			}
+		)
+		bytecode[#bytecode+1] = compiler.translator.units["GET"]
+	else
+		callers[#callers+1]={
+			operation = operation,
+			tag       = parameters[1],
+			address   = #bytecode+3
 		}
-	)
-	bytecode[#bytecode+1] = compiler.translator.units["GET"]
+		
+		bytecode[#bytecode+1] = string.char(0x03) --NUM
+		bytecode[#bytecode+1] = string.char(0x01)
+		bytecode[#bytecode+1] = string.char(0x00)
+		bytecode[#bytecode+1] = string.char(0x00)
+		bytecode[#bytecode+1] = string.char(0x00)
+		bytecode[#bytecode+1] = string.char(0x00)
+	end
+	
 	bytecode[#bytecode+1] = compiler.translator.units["JMP"]
 	
 	compiler:paste_uint32(bytecode,resolve,#bytecode)
@@ -864,7 +1117,11 @@ compiler.translator.units["RUN"]=function(compiler,context,operation)
 	bytecode[#bytecode+1] = compiler.translator.units["SET"]
 end
 
-compiler.translator.units["RET"]=function(compiler,context,operation)
+compiler.translator.units["RET"]=function(
+	compiler,
+	context,
+	operation
+)
 	if #operation.parameters>0 then
 		compiler:report(
 			operation.filename,
@@ -901,7 +1158,11 @@ compiler.translator.units["RET"]=function(compiler,context,operation)
 	bytecode[#bytecode+1] = compiler.translator.units["JMP"]
 end
 
-compiler.translator.translate=function(compiler,context,operation)
+compiler.translator.translate=function(
+	compiler,
+	context,
+	operation
+)
 	local unit = compiler.translator.units[operation.opcode]
 	
 	if type(unit)=="string" then
@@ -933,12 +1194,14 @@ end
 
 -------------------------------------------------------------------------------
 
-compiler.compile=function(compiler,operations)
+compiler.compile=function(
+	compiler,
+	operations
+)
 	local context={
 		operations  = operations,
 		bytecode    = {
-			string.char(0x00), --NUM
-			string.char(0x04),
+			string.char(0x03), --NUM
 			string.char(0x01),
 			string.char(0x00),
 			string.char(0x00),
@@ -969,7 +1232,7 @@ compiler.compile=function(compiler,operations)
 		)
 	end
 	
-	compiler:paste_uint32(bytecode,4,#globals)
+	compiler:paste_uint32(bytecode,3,#globals)
 	
 	for _,caller in ipairs(callers) do
 		local address
@@ -1011,7 +1274,7 @@ compiler.compile=function(compiler,operations)
 	for _,subroutine in ipairs(subroutines) do
 		compiler:paste_uint32(
 			bytecode,
-			subroutine.address+5,
+			subroutine.address+4,
 			#subroutine.variables
 		)
 		

@@ -2,7 +2,13 @@ local parser={}
 
 -------------------------------------------------------------------------------
 
-parser.warn=function(parser,filename,row,column,message)
+parser.warn=function(
+	parser,
+	filename,
+	row,
+	column,
+	message
+)
 	print((
 		string.char(27).."[93m[WARNING]"..
 		string.char(27).."[36m[%s,%d,%d]"..
@@ -15,7 +21,13 @@ parser.warn=function(parser,filename,row,column,message)
 	))
 end
 
-parser.report=function(parser,filename,row,column,message)
+parser.report=function(
+	parser,
+	filename,
+	row,
+	column,
+	message
+)
 	print((
 		string.char(27).."[91m[SYNTAX ERROR]"..
 		string.char(27).."[36m[%s,%d,%d]"..
@@ -33,7 +45,11 @@ end
 
 parser.grammar={}
 
-parser.grammar["SYMBOL"]=function(parser,context,token)
+parser.grammar["SYMBOL"]=function(
+	parser,
+	context,
+	token
+)
 	context.operations[#context.operations+1]={
 		filename   = token.filename,
 		row        = token.row,
@@ -43,7 +59,11 @@ parser.grammar["SYMBOL"]=function(parser,context,token)
 	}
 end
 
-parser.grammar["NUMBER"]=function(parser,context,token)
+parser.grammar["NUMBER"]=function(
+	parser,
+	context,
+	token
+)
 	if #context.operations==0 then
 		parser:report(
 			token.filename,
@@ -65,7 +85,11 @@ parser.grammar["NUMBER"]=function(parser,context,token)
 	parameter[#parameter+1]=token.value
 end
 
-parser.grammar["STRING"]=function(parser,context,token)
+parser.grammar["STRING"]=function(
+	parser,
+	context,
+	token
+)
 	if #context.operations==0 then
 		parser:report(
 			token.filename,
@@ -75,7 +99,7 @@ parser.grammar["STRING"]=function(parser,context,token)
 		)
 	end
 	if #token.value==0 then
-		parser:warn(
+		parser:report(
 			token.filename,
 			token.row,
 			token.column,
@@ -97,7 +121,11 @@ parser.grammar["STRING"]=function(parser,context,token)
 	end
 end
 
-parser.grammar["SPLICE"]=function(parser,context,token)
+parser.grammar["SPLICE"]=function(
+	parser,
+	context,
+	token
+)
 	if #context.operations==0 then
 		parser:report(
 			token.filename,
@@ -124,7 +152,10 @@ end
 
 -------------------------------------------------------------------------------
 
-parser.parse=function(parser,tokens)
+parser.parse=function(
+	parser,
+	tokens
+)
 	local context={
 		tokens     = tokens,
 		operations = {}

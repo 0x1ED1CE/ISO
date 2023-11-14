@@ -1,0 +1,97 @@
+REM "*************************************************************************"
+REM "* ETCH GRAPHICS LIBRARY VERSION 1.0                                     *"
+REM "* COPYRIGHT (C) 2023 DICE                                               *"
+REM "*************************************************************************"
+
+FUN "ETCH.MIN",
+	"A","B"
+	VAR "A" GET
+	VAR "B" GET
+	FLS
+	REC "A_MIN" JMC
+	VAR "A" GET
+	VAR "B" GET
+	VAR "A" SET
+	VAR "B" SET
+	SEC "A_MIN"
+		RET
+
+FUN "ETCH.MAX",
+	"A","B"
+	VAR "A" GET
+	VAR "B" GET
+	FLS
+	REC "B_MAX" JMC
+	RET
+	SEC "B_MAX"
+		VAR "A" GET
+		VAR "B" GET
+		VAR "A" SET
+		VAR "B" SET
+
+FUN "ETCH.BARYCENTRIC",
+	"X","Y",
+	"AX","AY",
+	"BX","BY",
+	"CX","CY",
+	"A","B","C"
+	VAR "CX"  GET VAR "AX"  GET FSU     VAR "V1X" SET
+	VAR "BX"  GET VAR "AX"  GET FSU     VAR "V1Y" SET
+	VAR "AX"  GET VAR "X"   GET FSU     VAR "V1Z" SET
+	VAR "CY"  GET VAR "AY"  GET FSU     VAR "V2X" SET
+	VAR "BY"  GET VAR "AY"  GET FSU     VAR "V2Y" SET
+	VAR "AY"  GET VAR "Y"   GET FSU     VAR "V2Z" SET
+	VAR "V1Y" GET VAR "V2Z" GET FMU
+	VAR "V1Z" GET VAR "V2Y" GET FMU FSU VAR "U"   SET
+	VAR "V1Z" GET VAR "V2X" GET FMU
+	VAR "V1X" GET VAR "V2Z" GET FMU FSU VAR "V"   SET
+	VAR "V1X" GET VAR "V2Y" GET FMU
+	VAR "V1Y" GET VAR "V2X" GET FMU FSU VAR "W"   SET
+	VAR "U"   GET VAR "W"   GET FDI     VAR "C"   SET
+	VAR "V"   GET VAR "W"   GET FDI     VAR "B"   SET
+	NUM 1 UTF
+	VAR "U" GET
+	VAR "V" GET
+	FAD
+	VAR "W" GET
+	FDI FSU
+	VAR "A" SET
+
+FUN "ETCH.RASTER_TRIANGLE",
+	"BUFFER",
+	"BUFFER_WIDTH",
+	"BUFFER_HEIGHT",
+	"AX","AY",
+	"BX","BY",
+	"CX","CY"
+	SEC "GET_MIN_X"
+		VAR "AX" GET VAR "BX"    GET RUN "ETCH.MIN"
+		POP          VAR "CX"    GET RUN "ETCH.MIN"
+		POP          VAR "MIN_X" SET
+	SEC "GET_MIN_Y"
+		VAR "AY" GET VAR "BY"    GET RUN "ETCH.MIN"
+		POP          VAR "CY"    GET RUN "ETCH.MIN"
+		POP          VAR "MIN_Y" SET
+	SEC "GET_MAX_X"
+		VAR "AX" GET VAR "BX"    GET RUN "ETCH.MAX"
+		POP          VAR "CX"    GET RUN "ETCH.MAX"
+		POP          VAR "MAX_X" SET
+	SEC "GET_MAX_Y"
+		VAR "AY" GET VAR "BY"    GET RUN "ETCH.MAX"
+		POP          VAR "CY"    GET RUN "ETCH.MAX"
+		POP          VAR "MAX_Y" SET
+	VAR "MIN_Y" GET VAR "PY" SET
+	SEC "LOOP_Y"
+		VAR "MIN_X" GET VAR "PX" SET
+		SEC "LOOP_X"
+			VAR "PX" GET VAR "PY" GET
+			VAR "AX" GET VAR "AY" GET
+			VAR "BX" GET VAR "BY" GET
+			VAR "CX" GET VAR "CY" GET
+			NUM 0 0 0
+			RUN "ETCH.BARYCENTRIC"
+			
+			VAR "PX" GET NUM 1 FAD DUP VAR "PX" SET
+			VAR "MAX_X" GET FLS VAR "LOOP_X" JMC
+		VAR "PY" GET NUM 1 FAD DUP VAR "PY" SET
+		VAR "MAX_Y" GET FLS VAR "LOOP_Y" JMC

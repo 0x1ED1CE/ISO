@@ -22,17 +22,5 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef ISO_H
-#define ISO_H
+#include "iso_asm.h"
 
-#define ISO_VERSION 0.6
-
-typedef unsigned int  iso_uint;
-typedef unsigned char iso_char;
-typedef float         iso_float;
-typedef struct {
-	iso_uint  uint;
-	iso_float fp;
-} iso_word;
-
-#endif

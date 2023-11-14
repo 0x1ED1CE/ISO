@@ -22,17 +22,65 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef ISO_H
-#define ISO_H
+#include <stdio.h>
+#include <stdlib.h>
 
-#define ISO_VERSION 0.6
-
-typedef unsigned int  iso_uint;
-typedef unsigned char iso_char;
-typedef float         iso_float;
-typedef struct {
-	iso_uint  uint;
-	iso_float fp;
-} iso_word;
-
+#ifdef _WIN32
+#include <conio.h>
+#include <windows.h>
 #endif
+
+#include "iso_io.h"
+
+void iso_io_run(
+	iso_vm *vm
+) {
+	if (vm->INT==ISO_INT_NONE)
+		return;
+	
+	iso_uint A,B;
+	
+	switch(vm->INT) {
+		case ISO_INT_CONSOLE_OUTPUT:
+			iso_vm_interrupt(vm,ISO_INT_NONE);
+			
+			putc(iso_vm_pop(vm),stdout);
+			
+			break;
+		case ISO_INT_CONSOLE_INPUT:
+			iso_vm_interrupt(vm,ISO_INT_NONE);
+			
+			A = 0;
+			B = 0;
+			
+			do {
+				B=(iso_uint)getc(stdin);
+				
+				if (B=='\n')
+					break;
+				
+				iso_vm_push(vm,B);
+				A+=1;
+			} while (vm->INT==ISO_INT_NONE);
+			
+			iso_vm_push(vm,A);
+			
+			break;
+		case ISO_INT_FILE_OPEN:
+			break;
+		case ISO_INT_FILE_CLOSE:
+			break;
+		case ISO_INT_FILE_SIZE:
+			break;
+		case ISO_INT_FILE_READ:
+			break;
+		case ISO_INT_FILE_WRITE:
+			break;
+		case ISO_INT_CLOCK:
+			break;
+		case ISO_INT_TERMINATE:
+			iso_vm_interrupt(vm,ISO_INT_NONE);
+			
+			exit((int)iso_vm_pop(vm));
+	}
+}
