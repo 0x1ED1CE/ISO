@@ -1,0 +1,30 @@
+FUN "CONSOLE.WRITE",
+	"CHAR"
+	VAR "CHAR" GET
+	NUM 0x20   INT
+	RET
+
+FUN "CONSOLE.PRINT",
+	"STRING"
+	SEC "CONSOLE.PRINT.START"
+		NUM 0                         REM "Initialize INDEX"
+		VAR "INDEX"               SET
+		NUM 0                         REM "Initialize SIZE"
+		VAR "STRING"              GET
+		RUN "STRING.SIZE"         POP
+		VAR "SIZE"                SET
+	SEC "CONSOLE.PRINT.WRITE"
+		VAR "SIZE"                GET REM "Bound check"
+		VAR "INDEX"               GET CLE
+		REC "CONSOLE.PRINT.END"   JMC
+		NUM 0                         REM "Write character to console"
+		VAR "INDEX"               GET
+		VAR "STRING"              GET
+		RUN "STRING.GET"          POP POP
+		RUN "CONSOLE.WRITE"       POP
+		VAR "INDEX"               GET REM "Increment index"
+		NUM 1                     ADD
+		VAR "INDEX"               SET
+		REC "CONSOLE.PRINT.WRITE" JMP REM "Repeat"
+	SEC "CONSOLE.PRINT.END"
+		RET

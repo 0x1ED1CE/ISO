@@ -1,0 +1,615 @@
+REM "*************************************************************************"
+REM "* ISO STRING LIBRARY                                                    *"
+REM "* COPYRIGHT (C) 2023 DICE                                               *"
+REM "*************************************************************************"
+
+SEC "STRING.INIT"
+	NUM 4
+	GBL "STRING.WORD_SIZE" SET
+	
+	REC "STRING.INIT.END" JMP
+
+FUN "STRING.SIZE",
+	"SIZE",
+	"STRING"
+	VAR "STRING" GET GET
+	VAR "SIZE"   SET
+	RET
+
+FUN "STRING.WORDS",
+	"WORDS",
+	"SIZE"
+	SEC "STRING.WORDS.START"
+		REM "Initialize WORDS"
+		NUM 0
+		VAR "WORDS"            SET
+		
+		REM "Goto end if SIZE is zero"
+		VAR "SIZE"             GET
+		NUM 0                  CEQ
+		REC "STRING.WORDS.END" JMC
+		
+		REM "WORDS=(SIZE-1)/4+1"
+		VAR "SIZE"             GET
+		NUM 1                  SUB
+		GBL "STRING.WORD_SIZE" GET DIV
+		NUM 1                  ADD
+		VAR "WORDS"            SET
+	SEC "STRING.WORDS.END"
+		RET
+
+FUN "STRING.GET",
+	"CHAR",
+	"INDEX",
+	"STRING"
+	SEC "STRING.GET.START"
+		REM "Initialize SIZE"
+		NUM 0
+		VAR "STRING"           GET
+		RUN "STRING.SIZE"      POP
+		VAR "SIZE"             SET
+		
+		REM "Bound check"
+		VAR "SIZE"             GET
+		VAR "INDEX"            GET CLE
+		REC "STRING.GET.END"   JMC
+		
+		REM "Retrieve word containing char"
+		VAR "STRING"           GET
+		NUM 1                  ADD
+		VAR "INDEX"            GET
+		GBL "STRING.WORD_SIZE" GET DIV ADD GET
+		
+		REM "Calculate char offset"
+		GBL "STRING.WORD_SIZE" GET
+		NUM 1                  SUB
+		VAR "INDEX"            GET     
+		GBL "STRING.WORD_SIZE" GET MOD SUB
+		NUM 8                  MUL RSH
+		NUM 0xFF               AND
+		VAR "CHAR"             SET
+	SEC "STRING.GET.END"
+		RET
+
+FUN "STRING.SET",
+	"CHAR",
+	"INDEX",
+	"STRING"
+	SEC "STRING.SET.START"
+		REM "Initialize SIZE"
+		NUM 0
+		VAR "STRING"           GET
+		RUN "STRING.SIZE"      POP
+		VAR "SIZE"             SET
+		
+		REM "Bound check"
+		VAR "SIZE"             GET
+		VAR "INDEX"            GET CLE
+		REC "STRING.SET.END"   JMC
+		
+		REM "Calculate address of word"
+		VAR "STRING"           GET
+		NUM 1                  ADD
+		VAR "INDEX"            GET
+		GBL "STRING.WORD_SIZE" GET DIV ADD
+		VAR "ADDRESS"          SET
+		
+		REM "Calculate char offset"
+		GBL "STRING.WORD_SIZE" GET
+		NUM 1                  SUB
+		VAR "INDEX"            GET     
+		GBL "STRING.WORD_SIZE" GET MOD SUB
+		NUM 8                  MUL
+		VAR "OFFSET"           SET
+		
+		REM "Create bit mask"
+		NUM 0xFF
+		VAR "OFFSET"           GET LSH
+		VAR "MASK"             SET
+		
+		REM "Blit character"
+		VAR "ADDRESS"          GET GET
+		VAR "MASK"             GET NOT AND
+		VAR "CHAR"             GET
+		VAR "OFFSET"           GET LSH BOR
+		VAR "ADDRESS"          GET SET
+	SEC "STRING.SET.END"
+		RET
+
+FUN "STRING.MATCH",
+	"MATCH",
+	"INDEX_A",
+	"INDEX_B",
+	"SIZE",
+	"STRING_A",
+	"STRING_B"
+	SEC "STRING.MATCH.START"
+		REM "Initialize COUNT"
+		NUM 0
+		VAR "COUNT"              SET
+	SEC "STRING.MATCH.CHECK"
+		REM "Pass if done counting"
+		VAR "SIZE"               GET
+		VAR "COUNT"              GET CLE
+		REC "STRING.MATCH.PASS"  JMC
+		
+		REM "Get character from string A"
+		NUM 0
+		VAR "INDEX_A"            GET
+		VAR "STRING_A"           GET
+		RUN "STRING.GET"         POP POP
+		
+		REM "Get character from string B"
+		NUM 0
+		VAR "INDEX_B"            GET
+		VAR "STRING_B"           GET
+		RUN "STRING.GET"         POP POP CNE
+		
+		REM "Fail if characters do not match"
+		REC "STRING.MATCH.FAIL"  JMC
+		
+		REM "Increment COUNT"
+		VAR "COUNT"              GET
+		NUM 1                    ADD
+		VAR "COUNT"              SET
+		
+		REM "Increment INDEX_A"
+		VAR "INDEX_A"            GET
+		NUM 1                    ADD
+		VAR "INDEX_A"            SET
+		
+		REM "Increment INDEX_B"
+		VAR "INDEX_B"            GET
+		NUM 1                    ADD
+		VAR "INDEX_B"            SET
+		
+		REM "Repeat"
+		REC "STRING.MATCH.CHECK" JMP
+	SEC "STRING.MATCH.PASS"
+		NUM 1
+		VAR "MATCH"              SET
+		RET
+	SEC "STRING.MATCH.FAIL"
+		NUM 0
+		VAR "MATCH"              SET
+	SEC "STRING.MATCH.END"
+		RET
+
+FUN "STRING.FIND",
+	"FOUND",
+	"INDEX_A",
+	"INDEX_B",
+	"SIZE",
+	"STRING_A",
+	"STRING_B"
+	SEC "STRING.FIND.START"
+		REM "Initialize FOUND"
+		NUM 0
+		VAR "FOUND"             SET
+		
+		REM "Initialize SIZE_B"
+		NUM 0
+		VAR "STRING_B"          GET
+		RUN "STRING.SIZE"       POP
+		VAR "SIZE_B"            SET
+	SEC "STRING.FIND.MATCH"
+		REM "Bound check"
+		VAR "SIZE_B"            GET
+		VAR "INDEX_B"           GET CLE
+		REC "STRING.FIND.END"   JMC
+		
+		REM "Check if substring matches"
+		NUM 0
+		VAR "INDEX_A"           GET
+		VAR "INDEX_B"           GET
+		VAR "SIZE"              GET
+		VAR "STRING_A"          GET
+		VAR "STRING_B"          GET
+		RUN "STRING.MATCH"      POP POP POP POP POP
+		REC "STRING.FIND.FOUND" JMC
+		
+		REM "Increment INDEX_B"
+		VAR "INDEX_B"           GET
+		NUM 1                   ADD
+		VAR "INDEX_B"           SET
+		
+		REM "Repeat"
+		REC "STRING.FIND.MATCH" JMP
+	SEC "STRING.FIND.FOUND"
+		NUM 1
+		VAR "FOUND"             SET
+	SEC "STRING.FIND.END"
+		RET
+
+FUN "STRING.COPY",
+	"INDEX_A",
+	"INDEX_B",
+	"SIZE",
+	"STRING_A",
+	"STRING_B"
+	SEC "STRING.COPY.START"
+		REM "Initialize SIZE_A"
+		NUM 0
+		VAR "STRING_A"         GET
+		RUN "STRING.SIZE"      POP
+		VAR "SIZE_A"           SET
+		
+		REM "Initialize SIZE_B"
+		NUM 0
+		VAR "STRING_B"         GET
+		RUN "STRING.SIZE"      POP
+		VAR "SIZE_B"           SET
+		
+		REM "Initialize COUNT"
+		NUM 0
+		VAR "COUNT"            SET
+	SEC "STRING.COPY.LOOP"
+		REM "Goto end if at end of copy SIZE"
+		VAR "SIZE"             GET
+		VAR "COUNT"            GET CLE
+		
+		REM "Or if at end of string A"
+		VAR "SIZE_A"           GET
+		VAR "INDEX_A"          GET CLE BOR
+		
+		REM "Or if at end of string B"
+		VAR "SIZE_B"           GET
+		VAR "INDEX_B"          GET CLE BOR
+		REC "STRING.COPY.END"  JMC
+		
+		REM "Get character from string A"
+		NUM 0
+		VAR "INDEX_A"          GET
+		VAR "STRING_A"         GET
+		RUN "STRING.GET"       POP POP
+		
+		REM "Set character to string B"
+		VAR "INDEX_B"          GET
+		VAR "STRING_B"         GET
+		RUN "STRING.SET"       POP POP POP
+		
+		REM "Increment count"
+		VAR "COUNT"            GET
+		NUM 1                  ADD
+		VAR "COUNT"            SET
+		
+		REM "Increment index A"
+		VAR "INDEX_A"          GET
+		NUM 1                  ADD
+		VAR "INDEX_A"          SET
+		
+		REM "Increment index B"
+		VAR "INDEX_B"          GET
+		NUM 1                  ADD
+		VAR "INDEX_B"          SET
+		
+		REM "Repeat"
+		REC "STRING.COPY.LOOP" JMP
+	SEC "STRING.COPY.END"
+		RET
+
+FUN "STRING.FROM_UINT",
+	"NUMBER",
+	"INDEX",
+	"STRING"
+	SEC "STRING.FROM_UINT.START"
+		REM "Initialize DIGIT"
+		NUM 0
+		VAR "DIGIT"                  SET
+		
+		REM "Initialize VALUE"
+		VAR "NUMBER"                 GET
+		VAR "VALUE"                  SET
+	SEC "STRING.FROM_UINT.COUNT"
+		REM "Increment digit count"
+		VAR "DIGIT"                  GET
+		NUM 1                        ADD
+		VAR "DIGIT"                  SET
+		
+		REM "Remove last digit from value"
+		VAR "VALUE"                  GET
+		NUM 10                       DIV
+		VAR "VALUE"                  SET
+		
+		REM "Repeat if value is not zero"
+		VAR "VALUE"                  GET
+		NUM 0                        CNE
+		REC "STRING.FROM_UINT.COUNT" JMC
+		
+		REM "Reset value to number"
+		VAR "NUMBER"                 GET
+		VAR "VALUE"                  SET
+		
+		REM "Save index offset"
+		VAR "DIGIT"                  GET
+		VAR "OFFSET"                 SET
+	SEC "STRING.FROM_UINT.WRITE"
+		REM "Get least significant ASCII value"
+		VAR "VALUE"                  GET
+		NUM 10                       MOD
+		NUM "0"                      ADD
+		
+		REM "Apply value to end of string"
+		VAR "INDEX"                  GET
+		VAR "DIGIT"                  GET ADD
+		NUM 1                        SUB
+		VAR "STRING"                 GET
+		RUN "STRING.SET"             POP POP
+		
+		REM "Move to next character"
+		VAR "DIGIT"                  GET
+		NUM 1                        SUB
+		VAR "DIGIT"                  SET
+		
+		REM "Remove least significant value"
+		VAR "VALUE"                  GET
+		NUM 10                       DIV
+		VAR "VALUE"                  SET
+		
+		REM "Repeat"
+		VAR "VALUE"                  GET
+		NUM 0                        CNE
+		REC "STRING.FROM_UINT.WRITE" JMC
+	SEC "STRING.FROM_UINT.END"
+		VAR "INDEX"                  GET
+		VAR "OFFSET"                 GET ADD
+		VAR "INDEX"                  SET
+		RET
+
+FUN "STRING.TO_UINT",
+	"NUMBER",
+	"INDEX",
+	"STRING"
+	SEC "STRING.TO_UINT.START"
+		REM "Initialize NUMBER"
+		NUM 0
+		VAR "NUMBER"               SET
+	SEC "STRING.TO_UINT.PARSE"
+		REM "Goto end if at end of string"
+		NUM 0
+		VAR "STRING"               GET
+		RUN "STRING.SIZE"          POP
+		VAR "INDEX"                GET CLE
+		REC "STRING.TO_UINT.END"   JMC
+		
+		REM "Get current character"
+		NUM 0
+		VAR "INDEX"                GET
+		VAR "STRING"               GET
+		RUN "STRING.GET"           POP POP
+		VAR "CHAR"                 SET
+		
+		REM "If char is less than 0x30"
+		VAR "CHAR"                 GET
+		NUM "0"                    CLS
+		
+		 REM "Or greater than 0x39"
+		NUM "9"
+		VAR "CHAR"                 GET CLS BOR
+		
+		REM "Then goto end"
+		REC "STRING.TO_UINT.END"   JMC
+		
+		REM "Normalize ASCII value"
+		VAR "CHAR"                 GET
+		NUM "0"                    SUB
+		
+		REM "Append value"
+		VAR "NUMBER"               GET
+		NUM 10                     MUL ADD
+		VAR "NUMBER"               SET
+		
+		REM "Increment index"
+		VAR "INDEX"                GET
+		NUM 1                      ADD
+		VAR "INDEX"                SET
+		
+		REM "Repeat"
+		REC "STRING.TO_UINT.PARSE" JMP
+	SEC "STRING.TO_UINT.END"
+		RET
+
+FUN "STRING.FROM_FLOAT",
+	"NUMBER",
+	"INDEX",
+	"STRING"
+	SEC "STRING.FROM_FLOAT.START"
+		REM "Initialize SIGN"
+		VAR "NUMBER"                            GET
+		FPU 0                                   FLS
+		VAR "SIGN"                              SET
+		
+		REM "If negative then flip to positive"
+		VAR "SIGN"                              GET
+		NUM 0                                   CEQ
+		REC "STRING.FROM_FLOAT.GET_INT"         JMC
+		FPU 0
+		VAR "NUMBER"                            GET FSU
+		VAR "NUMBER"                            SET
+	SEC "STRING.FROM_FLOAT.GET_INT"
+		REM "Initialize INTEGER"
+		VAR "NUMBER"                            GET FTU
+		VAR "INTEGER"                           SET
+		
+		REM "Initialize FRACTION (Must be positive)"
+		VAR "NUMBER"                            GET
+		FPU 1                                   FMO
+		VAR "FRACTION"                          SET
+	SEC "STRING.FROM_FLOAT.FRACTIONIZE"
+		REM "Normalize FRACTION"
+		VAR "FRACTION"                          GET
+		VAR "FRACTION"                          GET FTU UTF FSU
+		FPU 0                                   FEQ
+		REC "STRING.FROM_FLOAT.FRACTIONIZE.END" JMC
+		VAR "FRACTION"                          GET
+		FPU 10                                  FMU
+		VAR "FRACTION"                          SET
+		REC "STRING.FROM_FLOAT.FRACTIONIZE"     JMP
+	SEC "STRING.FROM_FLOAT.FRACTIONIZE.END"
+		REM "Convert FRACTION to integer"
+		VAR "FRACTION"                          GET FTU
+		VAR "FRACTION"                          SET
+		
+		REM "Write sign or skip"
+		VAR "SIGN"                              GET
+		REC "STRING.FROM_FLOAT.SIGN.WRITE"      JMC
+		REC "STRING.FROM_FLOAT.SIGN.SKIP"       JMP
+	SEC "STRING.FROM_FLOAT.SIGN.WRITE"
+		REM "Write sign"
+		NUM "-"
+		VAR "INDEX"                             GET
+		VAR "STRING"                            GET
+		RUN "STRING.SET"                        POP POP POP
+		VAR "INDEX"                             GET
+		NUM 1                                   ADD
+		VAR "INDEX"                             SET
+	SEC "STRING.FROM_FLOAT.SIGN.SKIP"
+		REM "Write integer"
+		VAR "INTEGER"                           GET
+		VAR "INDEX"                             GET
+		VAR "STRING"                            GET
+		RUN "STRING.FROM_UINT"                  POP
+		VAR "INDEX"                             SET POP
+		
+		REM "Write fraction"
+		NUM "."
+		VAR "INDEX"                             GET
+		VAR "STRING"                            GET
+		RUN "STRING.SET"                        POP POP POP
+		VAR "INDEX"                             GET
+		NUM 1                                   ADD
+		VAR "INDEX"                             SET
+		
+		VAR "FRACTION"                          GET
+		VAR "INDEX"                             GET
+		VAR "STRING"                            GET
+		RUN "STRING.FROM_UINT"                  POP
+		VAR "INDEX"                             SET POP
+	SEC "STRING.FROM_FLOAT.END"
+		RET
+
+FUN "STRING.TO_FLOAT",
+	"NUMBER",
+	"INDEX",
+	"STRING"
+	SEC "STRING.TO_FLOAT.START"
+		REM "Initialize NUMBER"
+		FPU 0
+		VAR "NUMBER"                      SET
+		
+		REM "Initialize SIGN"
+		FPU 1
+		VAR "SIGN"                        SET
+		
+		REM "Goto end if at end of string"
+		NUM 0
+		VAR "STRING"                      GET
+		RUN "STRING.SIZE"                 POP
+		VAR "INDEX"                       GET CLE
+		REC "STRING.TO_FLOAT.END"         JMC
+		
+		REM "Check if negative"
+		NUM 0
+		VAR "INDEX"                       GET
+		VAR "STRING"                      GET
+		RUN "STRING.GET"                  POP POP
+		NUM "-"                           CNE
+		REC "STRING.TO_FLOAT.PARSE_INT"   JMC
+		FPU -1
+		VAR "SIGN"                        SET
+		
+		REM "Increment INDEX"
+		VAR "INDEX"                       GET
+		NUM 1                             ADD
+		VAR "INDEX"                       SET
+	SEC "STRING.TO_FLOAT.PARSE_INT"
+		REM "Parse integer portion of string"
+		NUM 0
+		VAR "INDEX"                       GET
+		VAR "STRING"                      GET
+		RUN "STRING.TO_UINT"              POP
+		VAR "INDEX"                       SET UTF
+		VAR "NUMBER"                      SET
+		
+		REM "Goto end if no decimal point"
+		NUM 0
+		VAR "INDEX"                       GET
+		VAR "STRING"                      GET
+		RUN "STRING.GET"                  POP POP
+		NUM "."                           CNE
+		REC "STRING.TO_FLOAT.END"         JMC
+		
+		REM "Increment INDEX"
+		VAR "INDEX"                       GET
+		NUM 1                             ADD
+		VAR "INDEX"                       SET
+		
+		REM "Parse fraction portion of string"
+		NUM 0
+		VAR "INDEX"                       GET
+		VAR "STRING"                      GET
+		RUN "STRING.TO_UINT"              POP
+		VAR "INDEX"                       SET UTF
+		VAR "FRACTION"                    SET
+	SEC "STRING.TO_FLOAT.FRACTIONIZE"
+		REM "Divide by 10 until below 1"
+		VAR "FRACTION"                    GET
+		FPU 10                            FDI
+		VAR "FRACTION"                    SET
+		
+		REM "Continue if greater than 1"
+		FPU 1
+		VAR "FRACTION"                    GET FLE
+		REC "STRING.TO_FLOAT.FRACTIONIZE" JMC
+		
+		REM "Add fraction to result"
+		VAR "NUMBER"                      GET
+		VAR "FRACTION"                    GET FAD
+		VAR "NUMBER"                      SET
+	SEC "STRING.TO_FLOAT.END"
+		REM "Apply sign to result"
+		VAR "SIGN"                        GET
+		VAR "NUMBER"                      GET FMU
+		VAR "NUMBER"                      SET
+		RET
+
+FUN "STRING.CLEAR",
+	"STRING"
+	SEC "STRING.CLEAR.START"
+		REM "Initialize INDEX"
+		NUM 0
+		VAR "INDEX" SET
+		
+		REM "Initialize SIZE"
+		NUM 0
+		VAR "STRING"      GET
+		RUN "STRING.SIZE" POP
+		VAR "SIZE"        SET
+	SEC "STRING.CLEAR.WRITE"
+		REM "Goto end if at end of string"
+		VAR "SIZE"             GET
+		VAR "INDEX"            GET CLE
+		REC "STRING.CLEAR.END" JMC
+		
+		REM "Write character to string"
+		NUM " "
+		VAR "INDEX"      GET
+		VAR "STRING"     GET
+		RUN "STRING.SET" POP POP POP
+		
+		REM "Increment INDEX"
+		VAR "INDEX" GET
+		NUM 1       ADD
+		VAR "INDEX" SET
+		
+		REM "Repeat"
+		REC "STRING.CLEAR.WRITE" JMP
+	SEC "STRING.CLEAR.END"
+		RET
+
+FUN "STRING.FORMAT",
+	"STRING_A",
+	"STRING_B",
+	"STRING_C"
+	SEC "STRING.FORMAT.END"
+		RET

@@ -1,0 +1,165 @@
+REM "*************************************************************************"
+REM "* ISO VECTOR3 LIBRARY VERSION 1.0                                       *"
+REM "* COPYRIGHT (C) 2023 DICE                                               *"
+REM "*************************************************************************"
+
+FUN "VECTOR3.ADD",
+	"AX","AY","AZ",
+	"BX","BY","BZ"
+	SEC "X"
+		VAR "AX" GET
+		VAR "BX" GET FAD
+		VAR "AX" SET
+	SEC "Y"
+		VAR "AY" GET
+		VAR "BY" GET FAD
+		VAR "AY" SET
+	SEC "Z"
+		VAR "AZ" GET
+		VAR "BZ" GET FAD
+		VAR "AZ" SET
+
+FUN "VECTOR3.SUBTRACT",
+	"AX","AY","AZ",
+	"BX","BY","BZ"
+	SEC "X"
+		VAR "AX" GET
+		VAR "BX" GET FSU
+		VAR "AX" SET
+	SEC "Y"
+		VAR "AY" GET
+		VAR "BY" GET FSU
+		VAR "AY" SET
+	SEC "Z"
+		VAR "AZ" GET
+		VAR "BZ" GET FSU
+		VAR "AZ" SET
+	
+FUN "VECTOR3.MULTIPLY",
+	"AX","AY","AZ",
+	"BX","BY","BZ"
+	SEC "X"
+		VAR "AX" GET
+		VAR "BX" GET FMU
+		VAR "AX" SET
+	SEC "Y"
+		VAR "AY" GET
+		VAR "BY" GET FMU
+		VAR "AY" SET
+	SEC "Z"
+		VAR "AZ" GET
+		VAR "BZ" GET FMU
+		VAR "AZ" SET
+
+FUN "VECTOR3.DIVIDE",
+	"AX","AY","AZ",
+	"BX","BY","BZ"
+	SEC "X"
+		VAR "AX" GET
+		VAR "BX" GET FDI
+		VAR "AX" SET
+	SEC "Y"
+		VAR "AY" GET
+		VAR "BY" GET FDI
+		VAR "AY" SET
+	SEC "Z"
+		VAR "AZ" GET
+		VAR "BZ" GET FDI
+		VAR "AZ" SET
+
+FUN "VECTOR3.MAGNITUDE",
+	"AX","AY","AZ",
+	"M"
+	VAR "AX" GET
+	FPU 2        FPO
+	VAR "AY" GET
+	FPU 2        FPO FAD
+	VAR "AZ" GET
+	FPU 2        FPO FAD
+	FPU 0.5      FPO
+	VAR "M"  SET
+
+FUN "VECTOR3.DOT",
+	"AX","AY","AZ",
+	"BX","BY","BZ",
+	"DOT"
+	VAR "AX"  GET
+	VAR "BX"  GET FMU
+	VAR "AY"  GET
+	VAR "BY"  GET FMU FAD
+	VAR "AZ"  GET
+	VAR "BZ"  GET FMU FAD
+	VAR "DOT" SET
+
+FUN "VECTOR3.CROSS",
+	"AX","AY","AZ",
+	"BX","BY","BZ"
+	SEC "X"
+		VAR "AY" GET
+		VAR "BZ" GET FMU
+		VAR "AZ" GET
+		VAR "BY" GET FMU FSU
+	SEC "Y"
+		VAR "AZ" GET
+		VAR "BX" GET FMU
+		VAR "AX" GET
+		VAR "BZ" GET FMU FSU
+	SEC "Z"
+		VAR "AX" GET
+		VAR "BY" GET FMU
+		VAR "AY" GET
+		VAR "BX" GET FMU FSU
+	SEC "RESULT"
+		VAR "AZ" SET
+		VAR "AY" SET
+		VAR "AX" SET
+
+FUN "VECTOR3.NORMAL",
+	"AX","AY","AZ"
+	SEC "MAGNITUDE"
+		VAR "AX" GET
+		FPU 2        FPO
+		VAR "AY" GET
+		FPU 2        FPO FAD
+		VAR "AZ" GET
+		FPU 2        FPO FAD
+		FPU 0.5      FPO
+		VAR "M"  SET
+	SEC "X"
+		VAR "AX" GET
+		VAR "M"  GET FDI
+		VAR "AX" SET
+	SEC "Y"
+		VAR "AY" GET
+		VAR "M"  GET FDI
+		VAR "AY" SET
+	SEC "Z"
+		VAR "AZ" GET
+		VAR "M"  GET FDI
+		VAR "AZ" SET
+
+FUN "VECTOR3.LERP",
+	"AX","AY","AZ",
+	"BX","BY","BZ",
+	"PT"
+	SEC "X"
+		FPU 1
+		VAR "PT" GET FSU
+		VAR "AX" GET FMU
+		VAR "BX" GET
+		VAR "PT" GET FMU FAD
+		VAR "AX" SET
+	SEC "Y"
+		FPU 1
+		VAR "PT" GET FSU
+		VAR "AY" GET FMU
+		VAR "BY" GET
+		VAR "PT" GET FMU FAD
+		VAR "AY" SET
+	SEC "Z"
+		FPU 1
+		VAR "PT" GET FSU
+		VAR "AZ" GET FMU
+		VAR "BZ" GET
+		VAR "PT" GET FMU FAD
+		VAR "AZ" SET

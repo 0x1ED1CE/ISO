@@ -1,0 +1,166 @@
+REM "*************************************************************************"
+REM "* ISO FILE LIBRARY                                                      *"
+REM "* COPYRIGHT (C) 2023 DICE                                               *"
+REM "*************************************************************************"
+
+SEC "FILE.INIT"
+	NUM 0x00 GBL "FILE.MODE.READ"   SET
+	NUM 0x01 GBL "FILE.MODE.WRITE"  SET
+	NUM 0x02 GBL "FILE.MODE.BOTH"   SET
+	NUM 0x03 GBL "FILE.MODE.APPEND" SET
+	
+	REM "Initialize file handler"
+	NUM 0x30 INT
+	
+	REC "FILE.INIT.END" JMP
+
+FUN "FILE.OPEN",
+	"PATH",
+	"MODE",
+	"FILE_ID"
+	SEC "FILE.OPEN.START"
+		VAR "MODE"    GET
+		VAR "PATH"    GET
+		NUM 0x32      INT
+		VAR "FILE_ID" SET
+	SEC "FILE.OPEN.END"
+		RET
+
+FUN "FILE.CLOSE",
+	"FILE_ID"
+	SEC "FILE.CLOSE.START"
+		VAR "FILE_ID" GET
+		NUM 0x33      INT
+	SEC "FILE.CLOSE.END"
+		RET
+
+FUN "FILE.SIZE",
+	"SIZE",
+	"FILE_ID"
+	SEC "FILE.SIZE.START"
+		VAR "FILE_ID" GET
+		NUM 0x34      INT
+		VAR "SIZE"    SET
+	SEC "FILE.SIZE.END"
+		RET
+
+FUN "FILE.SEEK.SET",
+	"ADDRESS",
+	"FILE_ID"
+	SEC "FILE.SEEK.SET.START"
+		VAR "ADDRESS" GET
+		VAR "FILE_ID" GET
+		NUM 0x35      INT
+	SEC "FILE.SEEK.SET.END"
+		RET
+
+FUN "FILE.SEEK.GET",
+	"ADDRESS",
+	"FILE_ID"
+	SEC "FILE.SEEK.GET.START"
+		VAR "FILE_ID" GET
+		NUM 0x36      INT
+		VAR "ADDRESS" SET
+	SEC "FILE.SEEK.GET.END"
+		RET
+
+FUN "FILE.READ",
+	"BUFFER",
+	"FILE_ID"
+	SEC "FILE.READ.START"
+		VAR "BUFFER"  GET
+		VAR "FILE_ID" GET
+		NUM 0x37      INT
+	SEC "FILE.READ.END"
+		RET
+
+FUN "FILE.WRITE",
+	"BUFFER",
+	"FILE_ID"
+	SEC "FILE.WRITE.START"
+		VAR "BUFFER"  GET
+		VAR "FILE_ID" GET
+		NUM 0x38      INT
+	SEC "FILE.WRITE.END"
+		RET
+
+FUN "FILE.READ.LINE",
+	"BUFFER",
+	"FILE_ID"
+	SEC "FILE.READ.LINE.START"
+		REM "Clear BUFFER"
+		VAR "BUFFER"       GET
+		RUN "STRING.CLEAR" POP
+		
+		REM "Initialize BUFFER_INDEX"
+		NUM 0
+		VAR "BUFFER_INDEX" SET
+		
+		REM "Initialize FILE_INDEX"
+		NUM 0
+		VAR "FILE_ID"       GET
+		RUN "FILE.SEEK.GET" POP
+		VAR "FILE_INDEX"    SET
+		
+		REM "Initialize BUFFER_SIZE"
+		NUM 0
+		VAR "BUFFER"      GET
+		RUN "STRING.SIZE" POP
+		VAR "BUFFER_SIZE" SET
+		
+		REM "Initialize FILE_SIZE"
+		NUM 0
+		VAR "FILE_ID"   GET
+		RUN "FILE.SIZE" POP
+		VAR "FILE_SIZE" SET
+		
+		REM "Initialize CHAR_BUFFER"
+		POS
+		VAR "CHAR_BUFFER" SET
+		NUM 1 0
+	SEC "FILE.READ.LINE.CHAR"
+		REM "Goto end if at end of buffer"
+		VAR "BUFFER_SIZE"        GET
+		VAR "BUFFER_INDEX"       GET CLE
+		REC "FILE.READ.LINE.END" JMC
+		
+		REM "Goto end if at end of file"
+		VAR "FILE_SIZE"          GET
+		VAR "FILE_INDEX"         GET CLE
+		REC "FILE.READ.LINE.END" JMC
+		
+		REM "Get next character"
+		VAR "CHAR_BUFFER"  GET
+		VAR "FILE_ID"      GET
+		RUN "FILE.READ"    POP POP
+		
+		NUM 0 0
+		VAR "CHAR_BUFFER" GET
+		RUN "STRING.GET"  POP POP
+		VAR "CHAR"        SET
+		
+		REM "Goto end if at end of line"
+		VAR "CHAR"               GET
+		NUM 0x0A                 CEQ
+		REC "FILE.READ.LINE.END" JMC
+		
+		REM "Copy char to buffer"
+		VAR "CHAR"         GET
+		VAR "BUFFER_INDEX" GET
+		VAR "BUFFER"       GET
+		RUN "STRING.SET"   POP POP POP
+		
+		REM "Increment BUFFER_INDEX"
+		VAR "BUFFER_INDEX" GET
+		NUM 1              ADD
+		VAR "BUFFER_INDEX" SET
+		
+		REM "Increment FILE_INDEX"
+		VAR "FILE_INDEX" GET
+		NUM 1            ADD
+		VAR "FILE_INDEX" SET
+		
+		REM "Repeat"
+		REC "FILE.READ.LINE.CHAR" JMP
+	SEC "FILE.READ.LINE.END"
+		RET

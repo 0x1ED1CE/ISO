@@ -1,0 +1,12 @@
+NUM 0 GBL "ISO_CALL_STACK" SET
+
+RUN "A"
+
+FUN "B"
+	RUN "C"
+
+FUN "A"
+	RUN "B"
+
+FUN "C"
+	NUM 0x02 INT REM "Invoke error"

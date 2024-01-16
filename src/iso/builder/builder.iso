@@ -1,0 +1,423 @@
+REM "*************************************************************************"
+REM "* ISO BUILDER 1.0                                                       *"
+REM "* COPYRIGHT (C) 2023 DICE                                               *"
+REM "*************************************************************************"
+
+SEC "ISO.BUILDER.INIT"
+	NUM 4 GBL "ISO.BUILDER.WORD_SIZE" SET
+	
+	NUM 1 GBL "ISO.BUILDER.TOKEN.SYMBOL" SET
+	NUM 2 GBL "ISO.BUILDER.TOKEN.NUMBER" SET
+	NUM 3 GBL "ISO.BUILDER.TOKEN.STRING" SET
+	NUM 4 GBL "ISO.BUILDER.TOKEN.SPLICE" SET
+
+	POS
+	GBL "ISO.BUILDER.OPCODE" SET
+	GBL "BUFFER.INTERFACE"   GET
+	STR
+		"INT" 0x10
+		"JMP" 0x20 "JMC" 0x21 "CEQ" 0x22 "CNE" 0x23 "CLS" 0x24 "CLE" 0x25
+		"HOP" 0x30 "POS" 0x31 "DUP" 0x32 "POP" 0x33 "SET" 0x34 "GET" 0x35
+		"ADD" 0x40 "SUB" 0x41 "MUL" 0x42 "DIV" 0x43 "POW" 0x44 "MOD" 0x45
+		"NOT" 0x50 "AND" 0x51 "BOR" 0x52 "XOR" 0x53 "LSH" 0x54 "RSH" 0x55
+		"FTU" 0x70 "UTF" 0x71 "FEQ" 0x72 "FNE" 0x73 "FLS" 0x74 "FLE" 0x75
+		"FAD" 0x80 "FSU" 0x81 "FMU" 0x82 "FDI" 0x83 "FPO" 0x84 "FMO" 0x85
+		"SIN" 0x90 "COS" 0x91 "TAN" 0x92 "SQR" 0x93 "LOG" 0x94 "EXP" 0x95
+	
+	REC "ISO.BUILDER.INIT.END" JMP
+
+REM "*************************************************************************"
+REM "* BUFFER WRAPPER                                                        *"
+REM "*************************************************************************"
+
+FUN "ISO.BUILDER.BUFFER.SIZE",
+	"SIZE",
+	"BUFFER"
+	
+
+REM "*************************************************************************"
+REM "* MESSAGE REPORTING FUNCTIONS                                           *"
+REM "*************************************************************************"
+
+FUN "ISO.BUILDER.INFO",
+	"MESSAGE"
+	SEC "ISO.BUILDER.INFO.START"
+		REM "Initialize HEADER"
+		POS
+		VAR "HEADER"           SET
+		GBL "BUFFER.INTERFACE" GET
+		STR 0x1B "[96m[INFO]" 0x1B "[0m "
+		
+		REM "Initialize FOOTER"
+		POS
+		VAR "FOOTER"           SET
+		GBL "BUFFER.INTERFACE" GET
+		STR 10
+		
+		REM "Print"
+		VAR "HEADER"        GET
+		RUN "CONSOLE.PRINT" POP
+		VAR "MESSAGE"       GET
+		RUN "CONSOLE.PRINT" POP
+		VAR "FOOTER"        GET
+		RUN "CONSOLE.PRINT" POP
+	SEC "ISO.BUILDER.INFO.END"
+		RET
+
+FUN "ISO.BUILDER.WARN",
+	"MESSAGE",
+	"FILENAME",
+	"ROW",
+	"COLUMN"
+	SEC "ISO.BUILDER.WARN.END"
+		RET
+
+FUN "ISO.BUILDER.ERROR",
+	"MESSAGE",
+	"FILENAME",
+	"ROW",
+	"COLUMN"
+	SEC "ISO.BUILDER.ERROR.END"
+		RET
+
+REM "*************************************************************************"
+REM "* DECODE STRING INTO OPCODE                                             *"
+REM "*************************************************************************"
+
+FUN "ISO.BUILDER.OPCODE.DECODE",
+	"OPCODE"
+	SEC "ISO.BUILDER.OPCODE.DECODE.START"
+		REM "Initialize SYMBOL"
+		VAR "OPCODE"                          GET 
+		VAR "SYMBOL"                          SET
+		
+		REM "Initialize OPCODE"
+		NUM 0
+		VAR "OPCODE"                          SET
+	
+		REM "Initialize OPCODES"
+		NUM 0
+		GBL "ISO.BUILDER.OPCODE"              GET
+		RUN "STRING.SIZE"                     POP
+		NUM 4                                 DIV
+		VAR "OPCODES"                         SET
+	
+		REM "Initialize INDEX"
+		NUM 0
+		VAR "INDEX"                           SET
+	SEC "ISO.BUILDER.OPCODE.DECODE.FIND"
+		REM "Continue unless end of opcodes"
+		VAR "OPCODES"                         GET
+		VAR "INDEX"                           GET CLE
+		REC "ISO.BUILDER.OPCODE.DECODE.END"   JMC
+		
+		REM "Check if symbol matches opcode"
+		NUM 0
+		VAR "INDEX"                           GET
+		NUM 4                                 MUL
+		NUM 0 3
+		GBL "ISO.BUILDER.OPCODE"              GET
+		VAR "SYMBOL"                          GET
+		RUN "STRING.MATCH"                    POP POP POP POP POP
+		REC "ISO.BUILDER.OPCODE.DECODE.MATCH" JMC
+		
+		REM "Go to next opcode"
+		VAR "INDEX"                           GET
+		NUM 1                                 ADD
+		VAR "INDEX"                           SET
+		
+		REM "Repeat"
+		REC "ISO.BUILDER.OPCODE.DECODE.FIND"  JMP
+	SEC "ISO.BUILDER.OPCODE.DECODE.MATCH"
+		NUM 0
+		VAR "INDEX"                           GET
+		NUM 4                                 MUL
+		NUM 3                                 ADD
+		GBL "ISO.BUILDER.OPCODE"              GET
+		RUN "STRING.GET"                      POP POP
+		VAR "OPCODE"                          SET
+	SEC "ISO.BUILDER.OPCODE.DECODE.END"
+		RET
+
+REM "*************************************************************************"
+REM "* GET NEXT TOKEN FROM SOURCE                                            *"
+REM "*************************************************************************"
+
+FUN "ISO.BUILDER.TOKENIZE",
+	"SOURCE",
+	"INDEX_A",
+	"INDEX_B",
+	"TYPE"
+	SEC "ISO.BUILDER.TOKENIZE.START"
+		REM "Initialize TYPE"
+		NUM 0
+		VAR "TYPE"                        SET
+		
+		REM "Initialize SOURCE.SIZE"
+		NUM 0
+		VAR "SOURCE"                      GET
+		RUN "STRING.SIZE"                 POP
+		VAR "SOURCE.SIZE"                 SET
+	SEC "ISO.BUILDER.TOKENIZE.PARSE"
+		REM "Goto end if index A is at end of source"
+		VAR "SOURCE.SIZE"                 GET
+		VAR "INDEX_A"                     GET CLE
+		REC "ISO.BUILDER.TOKENIZE.END"    JMC
+		
+		REM "Get character at index A"
+		NUM 0
+		VAR "INDEX_A"                     GET
+		VAR "SOURCE"                      GET
+		RUN "STRING.GET"                  POP POP
+		VAR "CHAR"                        SET
+		
+		REM "Parse if char is symbol"
+		VAR "CHAR"                        GET
+		RUN "ISO.BUILDER.TOKENIZE.IS_SYMBOL"
+		REC "ISO.BUILDER.TOKENIZE.SYMBOL" JMC
+		
+		REM "Parse if char is number"
+		VAR "CHAR"                        GET
+		RUN "ISO.BUILDER.TOKENIZE.IS_NUMBER"
+		REC "ISO.BUILDER.TOKENIZE.NUMBER" JMC
+		
+		REM "Parse if char is string"
+		VAR "CHAR"                        GET
+		RUN "ISO.BUILDER.TOKENIZE.IS_STRING"
+		REC "ISO.BUILDER.TOKENIZE.STRING" JMC
+		
+		REM "Parse if char is splice"
+		VAR "CHAR"                        GET
+		RUN "ISO.BUILDER.TOKENIZE.IS_SPLICE"
+		REC "ISO.BUILDER.TOKENIZE.SPLICE" JMC
+		
+		REM "Increment index A"
+		VAR "INDEX_A"                     GET
+		NUM 1                             ADD
+		VAR "INDEX_A"                     SET
+		
+		REM "Loop"
+		REC "ISO.BUILDER.TOKENIZE.PARSE"  JMP
+	SEC "ISO.BUILDER.TOKENIZE.SYMBOL"
+		GBL "ISO.BUILDER.TOKEN.SYMBOL"    GET
+		VAR "TYPE"                        SET
+		VAR "SOURCE"                      GET
+		VAR "INDEX_A"                     GET
+		VAR "INDEX_B"                     GET
+		RUN "ISO.BUILDER.TOKENIZE.SYMBOL"
+		VAR "INDEX_B"                     SET
+		VAR "INDEX_A"                     SET POP
+		RET
+	SEC "ISO.BUILDER.TOKENIZE.NUMBER"
+		GBL "ISO.BUILDER.TOKEN.NUMBER"    GET
+		VAR "TYPE"                        SET
+		VAR "SOURCE"                      GET
+		VAR "INDEX_A"                     GET
+		VAR "INDEX_B"                     GET
+		RUN "ISO.BUILDER.TOKENIZE.NUMBER"
+		VAR "INDEX_B"                     SET
+		VAR "INDEX_A"                     SET POP
+		RET
+	SEC "ISO.BUILDER.TOKENIZE.STRING"
+		GBL "ISO.BUILDER.TOKEN.STRING"    GET
+		VAR "TYPE"                        SET
+		VAR "SOURCE"                      GET
+		VAR "INDEX_A"                     GET
+		VAR "INDEX_B"                     GET
+		RUN "ISO.BUILDER.TOKENIZE.STRING"
+		VAR "INDEX_B"                     SET
+		VAR "INDEX_A"                     SET POP
+		RET
+	SEC "ISO.BUILDER.TOKENIZE.SPLICE"
+		GBL "ISO.BUILDER.TOKEN.SYMBOL"    GET
+		VAR "TYPE"                        SET
+		VAR "SOURCE"                      GET
+		VAR "INDEX_A"                     GET
+		VAR "INDEX_B"                     GET
+		RUN "ISO.BUILDER.TOKENIZE.SPLICE"
+		VAR "INDEX_B"                     SET
+		VAR "INDEX_A"                     SET POP
+		RET
+	SEC "ISO.BUILDER.TOKENIZE.END"
+		RET
+
+FUN "ISO.BUILDER.TOKENIZE.SYMBOL",
+	"SOURCE",
+	"INDEX_A",
+	"INDEX_B"
+	SEC "ISO.BUILDER.TOKENIZE.SYMBOL.START"
+		REM "Initialize SOURCE.SIZE"
+		NUM 0
+		VAR "SOURCE"                            GET
+		RUN "STRING.SIZE"                       POP
+		VAR "SOURCE.SIZE"                       SET
+		
+		REM "Initialize INDEX_B"
+		VAR "INDEX_A"                           GET
+		VAR "INDEX_B"                           SET
+	SEC "ISO.BUILDER.TOKENIZE.SYMBOL.PARSE"
+		REM "Increment index B"
+		VAR "INDEX_B"                           GET
+		NUM 1                                   ADD
+		VAR "INDEX_B"                           SET
+		
+		REM "Goto end if index B is at end of source"
+		VAR "SOURCE.SIZE"                       GET
+		VAR "INDEX_B"                           GET CLE
+		REC "ISO.BUILDER.TOKENIZE.SYMBOL.END"   JMC
+		
+		REM "Repeat if char is symbol"
+		NUM 0
+		VAR "INDEX_B"                           GET
+		VAR "SOURCE"                            GET
+		RUN "STRING.GET"                        POP POP
+		RUN "ISO.BUILDER.TOKENIZE.IS_SYMBOL"
+		REC "ISO.BUILDER.TOKENIZE.SYMBOL.PARSE" JMC
+	SEC "ISO.BUILDER.TOKENIZE.SYMBOL.END"
+		REM "Decrement index B"
+		VAR "INDEX_B"                           GET
+		NUM 1                                   SUB
+		VAR "INDEX_B"                           SET
+		RET
+
+FUN "ISO.BUILDER.TOKENIZE.NUMBER",
+	"SOURCE",
+	"INDEX_A",
+	"INDEX_B"
+	SEC "ISO.BUILDER.TOKENIZE.NUMBER.START"
+		REM "Initialize SOURCE.SIZE"
+		NUM 0
+		VAR "SOURCE"                            GET
+		RUN "STRING.SIZE"                       POP
+		VAR "SOURCE.SIZE"                       SET
+		
+		REM "Initialize INDEX_B"
+		VAR "INDEX_A"                           GET
+		VAR "INDEX_B"                           SET
+	SEC "ISO.BUILDER.TOKENIZE.NUMBER.PARSE"
+		REM "Increment index B"
+		VAR "INDEX_B"                           GET
+		NUM 1                                   ADD
+		VAR "INDEX_B"                           SET
+		
+		REM "Goto end if index B is at end of source"
+		VAR "SOURCE.SIZE"                       GET
+		VAR "INDEX_B"                           GET CLE
+		REC "ISO.BUILDER.TOKENIZE.NUMBER.END"   JMC
+		
+		REM "Repeat if char is number"
+		NUM 0
+		VAR "INDEX_B"                           GET
+		VAR "SOURCE"                            GET
+		RUN "STRING.GET"                        POP POP
+		RUN "ISO.BUILDER.TOKENIZE.IS_NUMBER"
+		REC "ISO.BUILDER.TOKENIZE.NUMBER.PARSE" JMC
+	SEC "ISO.BUILDER.TOKENIZE.NUMBER.END"
+		REM "Decrement index B"
+		VAR "INDEX_B"                           GET
+		NUM 1                                   SUB
+		VAR "INDEX_B"                           SET
+		RET
+
+FUN "ISO.BUILDER.TOKENIZE.STRING",
+	"SOURCE",
+	"INDEX_A",
+	"INDEX_B"
+	SEC "ISO.BUILDER.TOKENIZE.STRING.START"
+		REM "Initialize SOURCE.SIZE"
+		NUM 0
+		VAR "SOURCE"                            GET
+		RUN "STRING.SIZE"                       POP
+		VAR "SOURCE.SIZE"                       SET
+		
+		REM "Initialize INDEX_B"
+		VAR "INDEX_A"                           GET
+		VAR "INDEX_B"                           SET
+	SEC "ISO.BUILDER.TOKENIZE.STRING.PARSE"
+		REM "Increment index B"
+		VAR "INDEX_B"                           GET
+		NUM 1                                   ADD
+		VAR "INDEX_B"                           SET
+		
+		REM "Goto end if index B is at end of source"
+		VAR "SOURCE.SIZE"                       GET
+		VAR "INDEX_B"                           GET CLE
+		REC "ISO.BUILDER.TOKENIZE.STRING.END"   JMC
+		
+		REM "Goto end if char is string"
+		NUM 0
+		VAR "INDEX_B"                           GET
+		VAR "SOURCE"                            GET
+		RUN "STRING.GET"                        POP POP
+		RUN "ISO.BUILDER.TOKENIZE.IS_STRING"
+		REC "ISO.BUILDER.TOKENIZE.STRING.END"   JMC
+		
+		REM "Repeat"
+		REC "ISO.BUILDER.TOKENIZE.STRING.PARSE" JMP
+	SEC "ISO.BUILDER.TOKENIZE.STRING.END"
+		RET
+
+FUN "ISO.BUILDER.TOKENIZE.SPLICE",
+	"SOURCE",
+	"INDEX_A",
+	"INDEX_B"
+	SEC "ISO.BUILDER.TOKENIZE.SPLICE.START"
+		REM "Initialize INDEX_B"
+		VAR "INDEX_A" GET
+		VAR "INDEX_B" SET
+	SEC "ISO.BUILDER.TOKENIZE.SPLICE.END"
+		RET
+
+
+REM "*************************************************************************"
+REM "* HELPER FUNCTIONS FOR IDENTIFYING TOKENS                               *"
+REM "*************************************************************************"
+
+FUN "ISO.BUILDER.TOKENIZE.IS_SYMBOL",
+	"CHAR"
+	NUM "A"
+	VAR "CHAR" GET CLE
+	VAR "CHAR" GET
+	NUM "Z"    CLE AND
+	VAR "CHAR" SET
+	RET
+	
+FUN "ISO.BUILDER.TOKENIZE.IS_NUMBER",
+	"CHAR"
+	VAR "CHAR" GET
+	NUM "-"    CEQ
+	VAR "CHAR" GET
+	NUM "."    CEQ BOR
+	NUM "0"
+	VAR "CHAR" GET CLE
+	VAR "CHAR" GET
+	NUM "9"    CLE AND BOR
+	VAR "CHAR" SET
+	RET
+
+FUN "ISO.BUILDER.TOKENIZE.IS_STRING",
+	"CHAR"
+	VAR "CHAR" GET
+	NUM 0x22   CEQ
+	VAR "CHAR" SET
+	RET
+
+FUN "ISO.BUILDER.TOKENIZE.IS_SPLICE",
+	"CHAR"
+	VAR "CHAR" GET
+	NUM ","    CEQ
+	VAR "CHAR" SET
+	RET
+
+REM "*************************************************************************"
+REM "* CALCULATE BYTECODE SIZE OF EACH OPERATION                             *"
+REM "*************************************************************************"
+
+FUN "ISO.BUILDER.MEASURE",
+	"SOURCE",
+	"SIZE"
+	SEC "ISO.BUILDER.MEASURE.START"
+		
+	SEC "ISO.BUILDER.MEASURE.END"
+		RET
+
