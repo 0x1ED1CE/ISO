@@ -57,13 +57,13 @@ Table of blocks and their corresponding opcode:
 
 Floating point extension:
 
-``FPU [0x60 - 0x6F]`` 
+``FPU [0x60 - 0x6F]``<br>
 ``FTU [0x70]`` ``UTF [0x71]`` ``FEQ [0x72]`` ``FNE [0x73]`` ``FLS [0x74]`` ``FLE [0x75]``<br>
 ``FAD [0x80]`` ``FSU [0x81]`` ``FMU [0x82]`` ``FDI [0x83]`` ``FPO [0x84]`` ``FMO [0x85]``<br>
 ``SIN [0x90]`` ``COS [0x91]`` ``TAN [0x92]`` ``SQR [0x93]`` ``LOG [0x94]`` ``EXP [0x95]``<br>
 
 ## Macros
-Not every block directly translates to a single instruction. Some are macros which help with organizing the program structure, mainly functions and symbols.
+Not every block directly translates to a single instruction. Some are macros which help organize the program structure, mainly functions and symbols.
 
 List of built-in macros:
 
