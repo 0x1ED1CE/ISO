@@ -23,7 +23,8 @@ FUN "SUBTRACT","C","A","B"
     ADD
     VAR "C" SET
     RET         REM "It is required to return at end of the function or else it will fall through"
-
+```
+```asm
 NUM 0 1 2       REM "0 is a placeholder value"
 RUN "SUBTRACT"  REM "Call the SUBTRACT subroutine"
 POP POP         REM "Pop arguments from the stack, leaving only the result"
