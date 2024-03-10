@@ -22,7 +22,7 @@ FUN "SUBTRACT","C","A","B"
     VAR "B" GET REM "VAR returns the pointer and GET pushes the value from that address"
     ADD
     VAR "C" SET
-    RET         REM "It is required to return at end of the function or else it will fall through"
+    RET         REM "Must return at end of the function or else it will fall through"
 ```
 ```asm
 NUM 0 1 2       REM "0 is a placeholder value"
@@ -32,7 +32,7 @@ POP POP         REM "Pop arguments from the stack, leaving only the result"
 ## Interfacing with the host
 ISO uses interrupts in order to communicate with the host program. Interrupts simply halts the VM and allows the host to perform any necessary actions before resuming.
 
-As an example, assume ``INT 0x1234`` is the print interrupt
+As an example, assume ``0x1234`` is the print interrupt routine
 ```asm
 POS GBL "Text" SET REM "Assigns current stack pointer to global variable"
 NUM "Hello World!" 0
