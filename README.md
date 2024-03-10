@@ -1,4 +1,6 @@
 # Intermediate Script Object
+![LICENSE](https://img.shields.io/badge/LICENSE-MIT-green.svg)
+
 ISO is a minimal stack-oriented instruction format intended for embedded applications. It has a very simple Forth-like syntax, enough to write any programs sufficiently.
 
 ## Examples
@@ -27,7 +29,7 @@ RUN "SUBTRACT"  REM "Call the SUBTRACT subroutine"
 POP POP         REM "Pop arguments from the stack, leaving only the result"
 ```
 ## Interfacing with the host
-ISO uses interrupts in order to communicate with the host program. Interrupts simply halts the VM and allows the host to perform any necessary actions before resuming the VM.
+ISO uses interrupts in order to communicate with the host program. Interrupts simply halts the VM and allows the host to perform any necessary actions before resuming.
 
 As an example, assume ``INT 0x1234`` is the print interrupt
 ```asm
@@ -46,7 +48,7 @@ do {
 } while (!vm.INT);
 ```
 ## Blocks
-Most blocks directly translates to bytecode, with a few exceptions.
+Most blocks directly translates to bytecode with a few exceptions.
 
 Table of blocks and their corresponding opcode:
 
