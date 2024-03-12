@@ -66,7 +66,7 @@ Floating point extension:
 ``SIN [0x90]`` ``COS [0x91]`` ``TAN [0x92]`` ``SQR [0x93]`` ``LOG [0x94]`` ``EXP [0x95]``<br>
 
 ## Macros
-Not every block directly translates to a single instruction. Some are macros which help organize the program structure, mainly functions and symbols.
+Not every block directly translates to a single instruction. Some are macros which help organize the program structure.
 
 List of built-in macros:
 
