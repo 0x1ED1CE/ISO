@@ -48,7 +48,7 @@ do {
     do_io_stuff(&vm);
 } while (!vm.INT);
 ```
-## Blocks
+## Blocks (mnemonics)
 Most blocks directly translates to bytecode with a few exceptions.
 
 Table of blocks and their corresponding opcode:
