@@ -45,7 +45,7 @@ In C this may look like:
 ```c
 do {
     iso_vm_run(&vm);
-    do_io_stuff(&vm);
+    do_io_stuff(&vm); /* Sets INT back to 0 */
 } while (!vm.INT);
 ```
 ## Blocks (mnemonics)
