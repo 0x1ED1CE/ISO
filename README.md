@@ -20,7 +20,7 @@ Defining and calling a function
 FUN "SUBTRACT","C","A","B"
     VAR "A" GET REM "Arguments are passed by reference."
     VAR "B" GET REM "VAR returns the pointer and GET pushes the value from that address"
-    ADD
+    SUB
     VAR "C" SET
     RET         REM "Must return at end of the function or else it will fall through"
 ```
